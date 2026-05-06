@@ -69,11 +69,11 @@ export default function HomePage() {
         {/* Hero video */}
         <video
           autoPlay muted loop playsInline
-          poster="/images/hero.png"
+          poster="/assets/images/hero.png"
           className="absolute inset-0 w-full h-full object-cover sm:object-center"
           style={{ objectPosition: '65% 15%' }}
         >
-          <source src="/images/herov.mp4" type="video/mp4" />
+          <source src="/assets/videos/herov.mp4" type="video/mp4" />
         </video>
         {/* Overlay — dark at top for text, fades to white at bottom */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-white" />
@@ -166,7 +166,7 @@ export default function HomePage() {
           autoPlay muted loop playsInline
           className="absolute inset-0 w-full h-full object-cover object-center"
         >
-          <source src="/images/services.mp4" type="video/mp4" />
+          <source src="/assets/videos/services.mp4" type="video/mp4" />
         </video>
         {/* Dark overlay so cards stay readable */}
         <div className="absolute inset-0 bg-black/55" />
@@ -263,10 +263,10 @@ export default function HomePage() {
               transition: 'transform 0.3s ease-out',
             }}
           >
-            <img src="/images/aa.png" alt="" className="w-full h-full object-cover" />
+            <img src="/assets/images/aa.png" alt="" className="w-full h-full object-cover" />
           </div>
           <img
-            src="/images/ssc.png"
+            src="/assets/images/ssc.png"
             alt=""
             className="h-36 sm:h-48 w-auto object-contain opacity-100"
             style={{

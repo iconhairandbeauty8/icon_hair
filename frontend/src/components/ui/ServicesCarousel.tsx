@@ -82,7 +82,7 @@ export default function ServicesCarousel() {
       {/* Hero image behind deck */}
       <div className="pointer-events-none absolute inset-0">
         <img
-          src="/images/hero.png"
+          src="/assets/images/hero.png"
           alt=""
           className="w-full h-full object-cover object-center opacity-60"
         />
