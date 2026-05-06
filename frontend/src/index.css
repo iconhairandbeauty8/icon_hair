@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #d4a01e;
+  --gold-light: #e3bc37;
+  --gold-dark: #b87d16;
+  --onyx: #1a1a1a;
+  --onyx-mid: #2d2d2d;
+  --ivory: #faf8f4;
+  --champagne: #f7e7ce;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--ivory);
+  color: var(--onyx);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
+
+/* Parallax sections */
+.parallax-section {
+  position: relative;
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(26, 26, 26, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 160, 30, 0.2);
+}
+
+/* Gold shimmer text */
+.text-shimmer {
+  background: linear-gradient(90deg, #d4a01e, #f4e59d, #d4a01e, #b87d16);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Page transitions */
+.page-enter { animation: fadeUp 0.4s ease forwards; }
+
+/* Custom button styles */
+.btn-gold {
+  @apply bg-gold-gradient text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:shadow-gold hover:scale-105 active:scale-95;
+}
+
+.btn-outline-gold {
+  @apply border-2 border-gold-500 text-gold-600 font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:bg-gold-500 hover:text-white;
+}
+
+/* Card styles */
+.card-luxury {
+  @apply bg-white rounded-2xl shadow-soft border border-gold-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-luxury;
+}
+
+/* Form styles */
+.input-luxury {
+  @apply w-full px-4 py-3 bg-white border-2 border-onyx-100 rounded-xl font-sans text-onyx-900 placeholder-onyx-400 focus:outline-none focus:border-gold-500 transition-colors duration-200;
+}
+
+/* Star ratings */
+.star-filled { color: var(--gold); }
+.star-empty { color: #d1d5db; }
+
+/* Admin sidebar */
+.sidebar-link {
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-onyx-400 hover:bg-gold-50 hover:text-gold-700 transition-all duration-200;
+}
+.sidebar-link.active {
+  @apply bg-gold-gradient text-white shadow-gold;
+}
+
+/* Status badges */
+.badge-pending   { @apply bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full; }
+.badge-confirmed { @apply bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full; }
+.badge-completed { @apply bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full; }
+.badge-cancelled { @apply bg-red-100 text-red-800 text-xs font-medium px-2.5 py-1 rounded-full; }
+.badge-no_show   { @apply bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full; }
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-gradient-to-r from-onyx-100 via-onyx-50 to-onyx-100 bg-[length:400%_100%];
+}
+
+/* Booking flow steps */
+.step-active   { @apply bg-gold-gradient text-white shadow-gold; }
+.step-complete { @apply bg-green-500 text-white; }
+.step-inactive { @apply bg-onyx-100 text-onyx-400; }
