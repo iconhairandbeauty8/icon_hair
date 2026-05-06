@@ -1,377 +1,405 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { reviewApi, serviceApi, staffApi } from '../../services/api';
+import ServicesCarousel from '../../components/ui/ServicesCarousel';
 
-const HERO_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-woman-getting-her-hair-blow-dried-at-a-salon-42774-large.mp4';
+/* ─── Animation variant ──────────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
 
-const categories = [
-  { icon: '✂️', label: 'Hair', desc: 'Cuts, colour & treatments' },
-  { icon: '💅', label: 'Nails', desc: 'Manicures & pedicures' },
-  { icon: '✨', label: 'Skincare', desc: 'Facials & rejuvenation' },
-  { icon: '💆', label: 'Wellness', desc: 'Massage & relaxation' },
-  { icon: '👁️', label: 'Beauty', desc: 'Lashes, brows & more' },
-  { icon: '🌿', label: 'Organic', desc: 'Eco-friendly treatments' },
+/* ─── Static data ────────────────────────────────────────── */
+
+const fallbackReviews = [
+  { name: 'Sarah K.', service: 'Balayage', text: 'Absolutely incredible experience! The balayage was exactly what I wanted. Will definitely be back.' },
+  { name: 'Mike T.', service: "Men's Cut", text: 'Best salon in Auckland. The team is professional, talented and so welcoming. Love this place!' },
+  { name: 'Jessica L.', service: 'Facial', text: 'My go-to salon for years. Consistently amazing results and such a relaxing atmosphere.' },
 ];
 
-const stats = [
-  { value: '12+', label: 'Branches across NZ' },
-  { value: '200+', label: 'Expert stylists' },
-  { value: '50K+', label: 'Happy clients' },
-  { value: '4.9★', label: 'Average rating' },
-];
-
-const beforeAfter = [
-  { label: 'Balayage Transformation', category: 'Hair Colour' },
-  { label: 'Keratin Treatment', category: 'Hair Treatment' },
-  { label: 'Nail Art Design', category: 'Nails' },
-  { label: 'Deluxe Facial', category: 'Skincare' },
-];
-
-function StarRating({ rating }: { rating: number }) {
+/* ─── Star rating component ──────────────────────────────── */
+function Stars({ rating = 5 }: { rating?: number }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={i <= rating ? 'star-filled' : 'star-empty'} style={{ fontSize: 14 }}>★</span>
+        <span key={i} className={`text-sm ${i <= rating ? 'star-filled' : 'star-empty'}`}>★</span>
       ))}
     </div>
   );
 }
 
+/* ─── Component ──────────────────────────────────────────── */
 export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '40%']);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ sscX: 0, aaX: 0, aaShiftX: 0, aaShiftY: 0 });
+
+  const handleBannerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    setTilt({ sscX: y * 18, aaX: -y * 18, aaShiftX: x * 24, aaShiftY: y * 24 });
+  };
+  const handleBannerMouseLeave = () => setTilt({ sscX: 0, aaX: 0, aaShiftX: 0, aaShiftY: 0 });
 
   const { data: reviews } = useQuery({ queryKey: ['reviews-home'], queryFn: () => reviewApi.list({ limit: 6 }) });
   const { data: services } = useQuery({ queryKey: ['services-home'], queryFn: () => serviceApi.list() });
   const { data: staff } = useQuery({ queryKey: ['staff-home'], queryFn: () => staffApi.list() });
 
-  const featuredServices = services?.data?.slice(0, 6) || [];
+  const featuredServices = services?.data?.slice(0, 3) || [];
   const featuredStaff = staff?.data?.slice(0, 4) || [];
   const latestReviews = reviews?.data?.slice(0, 3) || [];
 
   return (
-    <div className="bg-ivory">
+    <div>
 
-      {/* ── HERO ── */}
-      <section ref={heroRef} className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-        {/* Video BG */}
-        <motion.div style={{ y: heroY }} className="absolute inset-0">
-          <video
-            autoPlay muted loop playsInline
-            className="w-full h-full object-cover"
-            poster="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920"
-          >
-            <source src={HERO_VIDEO} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-onyx-950/60 via-onyx-950/40 to-onyx-950/80" />
-        </motion.div>
+      {/* ══════════════════════════════════════════════════════
+          1. HERO
+      ══════════════════════════════════════════════════════ */}
+      <section
+        ref={heroRef}
+        className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden bg-gray-950"
+      >
+        {/* Hero video */}
+        <video
+          autoPlay muted loop playsInline
+          poster="/images/hero.png"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        >
+          <source src="/images/herov.mp4" type="video/mp4" />
+        </video>
+        {/* Overlay — dark at top for text, fades to white at bottom */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-white" />
 
-        {/* Hero content */}
-        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-gold-400 font-accent italic text-xl mb-3 tracking-wide"
+        <div
+          className="relative z-10 text-center max-w-3xl mx-auto"
+          style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+        >
+          {/* Badge */}
+          <motion.div
+            initial="hidden" animate="visible" variants={fadeUp} custom={0}
+            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full mb-8"
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block" />
             New Zealand's Premier Salon
-          </motion.p>
+          </motion.div>
+
+          {/* Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            className="font-display text-5xl md:text-7xl text-white font-bold leading-tight mb-6"
+            initial="hidden" animate="visible" variants={fadeUp} custom={1}
+            className="font-sans font-bold text-5xl sm:text-6xl md:text-7xl text-white leading-[1.1] mb-4"
           >
-            Where Beauty<br />
+            Where Beauty
+          </motion.h1>
+          <motion.h1
+            initial="hidden" animate="visible" variants={fadeUp} custom={2}
+            className="font-display italic text-5xl sm:text-6xl md:text-7xl leading-[1.1] mb-8"
+          >
             <span className="text-shimmer">Meets Luxury</span>
           </motion.h1>
+
+          {/* Subtitle */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-            className="text-white/70 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
+            initial="hidden" animate="visible" variants={fadeUp} custom={3}
+            className="text-white/75 text-lg md:text-xl leading-relaxed max-w-xl mx-auto mb-10"
           >
             Expert stylists, premium products, and an experience crafted for you — across 12+ locations in New Zealand.
           </motion.p>
+
+          {/* CTAs */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial="hidden" animate="visible" variants={fadeUp} custom={4}
+            style={{ textShadow: 'none' }}
+            className="flex flex-col sm:flex-row gap-3 justify-center"
           >
-            <Link to="/book" className="btn-gold text-base px-10 py-4 inline-flex items-center gap-2">
-              ✨ Book Appointment
+            <Link to="/book" className="btn-primary px-8 py-3.5 text-base rounded-xl">
+              Book Appointment
             </Link>
-            <Link to="/services" className="btn-outline-gold text-base px-10 py-4 inline-flex items-center gap-2 !border-white/40 !text-white hover:!bg-white hover:!text-onyx-900">
+            <Link to="/services"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl border-2 border-white/40 text-white font-semibold text-base hover:bg-white hover:text-gray-900 transition-all duration-200">
               Explore Services
             </Link>
           </motion.div>
-        </motion.div>
+
+          {/* Trust strip */}
+          <motion.div
+            initial="hidden" animate="visible" variants={fadeUp} custom={5}
+            className="flex flex-wrap items-center justify-center gap-6 mt-10 text-black text-sm font-medium"
+          >
+            {['200+ Stylists', '12 Locations', 'Easy Online Booking', 'No Booking Fees'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5">
+                <span className="text-purple-300">✓</span> {t}
+              </span>
+            ))}
+          </motion.div>
+        </div>
 
         {/* Scroll indicator */}
         <motion.div
           animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-white/30"
         >
-          <span className="text-xs tracking-widest uppercase">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-white/50 to-transparent" />
+          <span className="text-[10px] tracking-widest uppercase">Scroll</span>
+          <div className="w-px h-10 bg-gradient-to-b from-white/30 to-transparent" />
         </motion.div>
       </section>
 
-      {/* ── STATS ── */}
-      <section className="bg-onyx-950 py-12">
-        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="font-display text-3xl md:text-4xl text-shimmer font-bold mb-1">{s.value}</div>
-              <div className="text-white/50 text-sm">{s.label}</div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── SERVICE CATEGORIES ── */}
-      <section className="py-24 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-              className="text-gold-500 font-accent italic text-lg mb-2">What We Offer</motion.p>
-            <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              className="font-display text-4xl md:text-5xl text-onyx-900 font-bold">
-              Premium Services
-            </motion.h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.label}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }} viewport={{ once: true }}
-              >
-                <Link to={`/services?category=${cat.label}`}
-                  className="block card-luxury p-6 text-center group hover:border-gold-300">
-                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
-                  <div className="font-semibold text-onyx-900 text-sm mb-1">{cat.label}</div>
-                  <div className="text-onyx-400 text-xs">{cat.desc}</div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ══════════════════════════════════════════════════════
+          3. SERVICE CATEGORIES — deck carousel
+      ══════════════════════════════════════════════════════ */}
+      <ServicesCarousel />
 
-      {/* ── FEATURED SERVICES ── */}
-      <section className="py-24 bg-onyx-950 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-14">
-            <div>
-              <p className="text-gold-400 font-accent italic text-lg mb-2">Signature Treatments</p>
-              <h2 className="font-display text-4xl text-white font-bold">Most Loved Services</h2>
+      {/* ══════════════════════════════════════════════════════
+          4. FEATURED SERVICES
+      ══════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden">
+        {/* Full-section video background */}
+        <video
+          autoPlay muted loop playsInline
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        >
+          <source src="/images/services.mp4" type="video/mp4" />
+        </video>
+        {/* Dark overlay so cards stay readable */}
+        <div className="absolute inset-0 bg-black/55" />
+        {/* Blend top edge into white (from above section) */}
+        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/70 via-white/20 to-transparent" />
+        {/* Blend bottom edge into next section */}
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white/70 via-white/20 to-transparent" />
+
+        <div className="relative z-10 py-24 px-4">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex items-end justify-between mb-14">
+              <div>
+                <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+                  className="text-purple-300 text-xs font-semibold tracking-widest uppercase mb-3">Signature Treatments</motion.p>
+                <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+                  className="font-display text-4xl md:text-5xl text-white font-bold">Most Loved Services</motion.h2>
+              </div>
+              <Link to="/services" className="hidden md:flex items-center gap-1.5 text-sm text-purple-300 hover:text-white font-medium transition-colors">
+                View All <span>→</span>
+              </Link>
             </div>
-            <Link to="/services" className="hidden md:block text-gold-400 hover:text-gold-300 text-sm font-medium transition-colors">
-              View All Services →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredServices.map((service: any, i: number) => (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                className="glass-dark rounded-2xl overflow-hidden hover:border-gold-500/40 transition-all duration-300 group"
-              >
-                {/* Image */}
-                <div className="aspect-video bg-gradient-to-br from-onyx-800 to-onyx-900 overflow-hidden">
-                  {service.image_url
-                    ? <img src={service.image_url} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-                    : <div className="w-full h-full flex items-center justify-center text-4xl text-gold-500/30">✂️</div>
-                  }
-                </div>
-                {/* Info */}
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1 min-w-0 pr-2">
-                      <div className="text-xs text-gold-400 font-medium tracking-wider uppercase mb-1">{service.category}</div>
-                      <h3 className="text-white font-semibold text-lg leading-tight">{service.name}</h3>
+
+            {featuredServices.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredServices.map((service: any, i: number) => (
+                  <motion.div
+                    key={service.id}
+                    initial="hidden" whileInView="visible" variants={fadeUp} custom={i}
+                    viewport={{ once: true }}
+                    className="card group"
+                  >
+                    <div className="aspect-video bg-gray-100 overflow-hidden">
+                      {service.image_url
+                        ? <img src={service.image_url} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        : <div className="w-full h-full flex items-center justify-center text-4xl text-gray-200">✂️</div>
+                      }
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-gold-400 font-bold text-xl">NZ${service.price}</div>
-                      <div className="text-white/40 text-xs">{service.duration_minutes} min</div>
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0 pr-3">
+                          {service.category && (
+                            <span className="text-purple-600 text-xs font-semibold tracking-wider uppercase">{service.category}</span>
+                          )}
+                          <h3 className="font-semibold text-gray-900 mt-0.5">{service.name}</h3>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-bold text-gray-900">NZ${service.price}</div>
+                          <div className="text-gray-400 text-xs">{service.duration_minutes} min</div>
+                        </div>
+                      </div>
+                      {service.description && (
+                        <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-2">{service.description}</p>
+                      )}
+                      <Link to="/book"
+                        className="w-full text-center block py-2.5 rounded-xl border border-purple-200 text-purple-600 text-sm font-semibold
+                                   hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all duration-200">
+                        Book Now
+                      </Link>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="card">
+                    <div className="aspect-video bg-gray-100 skeleton" />
+                    <div className="p-6 space-y-3">
+                      <div className="h-3 bg-gray-100 rounded skeleton w-1/3" />
+                      <div className="h-4 bg-gray-100 rounded skeleton w-2/3" />
+                      <div className="h-10 bg-gray-100 rounded-xl skeleton mt-4" />
                     </div>
                   </div>
-                  <p className="text-white/50 text-sm leading-relaxed mb-4 line-clamp-2">{service.description}</p>
-                  <Link to="/book"
-                    className="w-full text-center block py-2.5 rounded-xl border border-gold-500/40 text-gold-400 text-sm font-medium hover:bg-gold-gradient hover:text-white hover:border-transparent transition-all duration-300">
-                    Book Now
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ── PARALLAX BANNER ── */}
-      <section
-        className="parallax-section h-[500px] flex items-center justify-center"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1920')" }}
-      >
-        <div className="absolute inset-0 bg-onyx-950/60" />
-        <div className="relative z-10 text-center px-4">
-          <p className="text-gold-400 font-accent italic text-xl mb-3">The Finest Care</p>
-          <h2 className="font-display text-4xl md:text-6xl text-white font-bold mb-6">
+      {/* ══════════════════════════════════════════════════════
+          5. PARALLAX BANNER
+      ══════════════════════════════════════════════════════ */}
+      <section ref={bannerRef} onMouseMove={handleBannerMouseMove} onMouseLeave={handleBannerMouseLeave} className="relative h-[420px] flex items-center justify-center overflow-hidden bg-white">
+        {/* Images — aa.png left, ssc.png right, both rotating opposite directions */}
+        <div className="absolute inset-0 flex items-center justify-center gap-16" style={{ perspective: '900px' }}>
+          <div
+            className="w-52 h-72 overflow-hidden rounded-lg opacity-100 shrink-0"
+            style={{
+              transform: `translateX(${tilt.aaShiftX}px) translateY(${tilt.aaShiftY}px) rotateX(${tilt.aaX}deg) rotate(-8deg)`,
+              transition: 'transform 0.3s ease-out',
+            }}
+          >
+            <img src="/images/aa.png" alt="" className="w-full h-full object-cover" />
+          </div>
+          <img
+            src="/images/ssc.png"
+            alt=""
+            className="h-48 w-auto object-contain opacity-100"
+            style={{
+              transform: `translateX(${-tilt.aaShiftX}px) translateY(${-tilt.aaShiftY}px) rotateX(${tilt.sscX}deg) rotate(98deg)`,
+              transition: 'transform 0.3s ease-out',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 text-center px-4 max-w-2xl mx-auto">
+          <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+            className="section-label mb-4">The Finest Care</motion.p>
+          <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+            className="section-title mb-6">
             Your Beauty, Our Passion
-          </h2>
-          <p className="text-white/70 text-lg max-w-xl mx-auto mb-8">
-            Using only premium products. Delivered by our award-winning stylists.
-          </p>
-          <Link to="/book" className="btn-gold px-12 py-4 text-lg">Book Your Experience</Link>
+          </motion.h2>
+          <motion.div initial="hidden" whileInView="visible" variants={fadeUp} custom={2} viewport={{ once: true }}>
+            <Link to="/book" className="btn-primary px-10 py-3.5">Book Your Experience</Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── OUR TEAM ── */}
-      <section className="py-24 px-4 bg-ivory">
+      {/* ══════════════════════════════════════════════════════
+          6. TEAM
+      ══════════════════════════════════════════════════════ */}
+      <section className="py-24 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-gold-500 font-accent italic text-lg mb-2">The Artists</p>
-            <h2 className="font-display text-4xl md:text-5xl text-onyx-900 font-bold">Meet Our Team</h2>
+            <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+              className="section-label mb-3">The Artists</motion.p>
+            <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+              className="section-title">Meet Our Team</motion.h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {featuredStaff.map((member: any, i: number) => (
+            {featuredStaff.length > 0 ? featuredStaff.map((member: any, i: number) => (
               <motion.div
                 key={member.id}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                className="card-luxury group"
+                initial="hidden" whileInView="visible" variants={fadeUp} custom={i}
+                viewport={{ once: true }}
+                className="card group text-center"
               >
-                <div className="aspect-square overflow-hidden bg-gradient-to-br from-gold-100 to-champagne">
+                <div className="aspect-square bg-gray-50 overflow-hidden">
                   {member.image_url ? (
                     <img src={member.image_url} alt={member.first_name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-5xl text-gold-300">
+                    <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-purple-200">
                       {member.first_name?.[0]}
                     </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-display font-semibold text-onyx-900">{member.first_name} {member.last_name}</h3>
-                  <p className="text-gold-600 text-sm font-medium">{member.role}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <StarRating rating={Math.round(member.avg_rating || 5)} />
-                    <span className="text-xs text-onyx-400">({member.review_count || 0})</span>
+                  <h3 className="font-semibold text-gray-900 text-sm">{member.first_name} {member.last_name}</h3>
+                  <p className="text-purple-600 text-xs font-medium mt-0.5">{member.role}</p>
+                  <div className="flex items-center justify-center gap-1 mt-2">
+                    <Stars rating={Math.round(member.avg_rating || 5)} />
+                    <span className="text-gray-400 text-xs">({member.review_count || 0})</span>
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )) : (
+              /* Skeleton */
+              [1, 2, 3, 4].map((i) => (
+                <div key={i} className="card">
+                  <div className="aspect-square bg-gray-100 skeleton" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-3 skeleton bg-gray-100 rounded w-3/4 mx-auto" />
+                    <div className="h-3 skeleton bg-gray-100 rounded w-1/2 mx-auto" />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
           <div className="text-center mt-10">
-            <Link to="/team" className="btn-outline-gold">Meet All Stylists</Link>
+            <Link to="/team" className="btn-ghost">Meet All Stylists</Link>
           </div>
         </div>
       </section>
 
-      {/* ── BEFORE/AFTER ── */}
-      <section className="py-24 bg-champagne px-4">
+      {/* ══════════════════════════════════════════════════════
+          7. REVIEWS
+      ══════════════════════════════════════════════════════ */}
+      <section className="py-24 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-gold-500 font-accent italic text-lg mb-2">Transformations</p>
-            <h2 className="font-display text-4xl md:text-5xl text-onyx-900 font-bold">Before & After</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {beforeAfter.map((item, i) => (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                className="card-luxury overflow-hidden group"
-              >
-                <div className="aspect-[3/4] bg-gradient-to-br from-gold-200 via-champagne to-gold-100 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-onyx-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span className="text-5xl text-gold-400/50">✨</span>
-                  <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="text-white font-semibold text-sm">{item.label}</div>
-                    <div className="text-gold-300 text-xs">{item.category}</div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link to="/gallery" className="btn-outline-gold">View Full Gallery</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── REVIEWS ── */}
-      <section className="py-24 px-4 bg-ivory">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-gold-500 font-accent italic text-lg mb-2">Client Love</p>
-            <h2 className="font-display text-4xl md:text-5xl text-onyx-900 font-bold">What Our Clients Say</h2>
+            <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+              className="section-label mb-3">Client Love</motion.p>
+            <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+              className="section-title">What Our Clients Say</motion.h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {latestReviews.length > 0 ? latestReviews.map((review: any, i: number) => (
+            {(latestReviews.length > 0 ? latestReviews : fallbackReviews).map((review: any, i: number) => (
               <motion.div
-                key={review.id}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                className="card-luxury p-6"
+                key={i}
+                initial="hidden" whileInView="visible" variants={fadeUp} custom={i}
+                viewport={{ once: true }}
+                className="card p-6"
               >
-                <StarRating rating={review.rating} />
-                <p className="text-onyx-600 leading-relaxed my-4 text-sm italic">"{review.comment}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gold-gradient flex items-center justify-center text-white font-bold text-sm">
-                    {review.customer_name?.[0]}
+                <Stars rating={review.rating || 5} />
+                <p className="text-gray-600 text-sm leading-relaxed my-4">
+                  "{review.comment || review.text}"
+                </p>
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
+                  <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm shrink-0">
+                    {(review.customer_name || review.name)?.[0]}
                   </div>
                   <div>
-                    <div className="font-semibold text-onyx-900 text-sm">{review.customer_name}</div>
-                    {review.service_name && <div className="text-gold-600 text-xs">{review.service_name}</div>}
+                    <div className="font-semibold text-gray-900 text-sm">{review.customer_name || review.name}</div>
+                    {(review.service_name || review.service) && (
+                      <div className="text-purple-600 text-xs">{review.service_name || review.service}</div>
+                    )}
                   </div>
                 </div>
               </motion.div>
-            )) : [1, 2, 3].map((i) => (
-              <div key={i} className="card-luxury p-6">
-                <div className="flex gap-1 mb-3">{[1,2,3,4,5].map(s=><span key={s} className="star-filled text-sm">★</span>)}</div>
-                <p className="text-onyx-600 text-sm italic mb-4">
-                  {i === 1 ? '"Absolutely incredible experience! The balayage was exactly what I wanted. Will definitely be back."'
-                  : i === 2 ? '"Best salon in Auckland. The team is professional, talented and so welcoming. Love this place!"'
-                  : '"My go-to salon for years. Consistently amazing results and such a relaxing atmosphere."'}
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gold-gradient flex items-center justify-center text-white font-bold text-sm">
-                    {i === 1 ? 'S' : i === 2 ? 'M' : 'J'}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-onyx-900 text-sm">
-                      {i === 1 ? 'Sarah K.' : i === 2 ? 'Mike T.' : 'Jessica L.'}
-                    </div>
-                    <div className="text-gold-600 text-xs">
-                      {i === 1 ? 'Balayage' : i === 2 ? "Men's Cut" : 'Facial'}
-                    </div>
-                  </div>
-                </div>
-              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="py-24 px-4 bg-onyx-950">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <p className="text-gold-400 font-accent italic text-xl mb-3">Ready to Transform?</p>
-            <h2 className="font-display text-4xl md:text-5xl text-white font-bold mb-6">
+      {/* ══════════════════════════════════════════════════════
+          8. CTA
+      ══════════════════════════════════════════════════════ */}
+      <section className="py-24 px-4 bg-gray-950">
+        <div className="max-w-2xl mx-auto text-center">
+          <motion.div initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
+            <p className="section-label text-purple-400 mb-4">Ready to Transform?</p>
+            <h2 className="font-display text-4xl md:text-5xl text-white font-bold mb-6 leading-tight">
               Book Your Appointment Today
             </h2>
-            <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+            <p className="text-gray-400 text-lg mb-10 leading-relaxed">
               Join 50,000+ clients who trust LuxeSalon for their beauty needs. Easy online booking, flexible scheduling.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/book" className="btn-gold text-base px-12 py-4">Book Now</Link>
-              <Link to="/branches" className="btn-outline-gold text-base px-12 py-4 !border-white/30 !text-white hover:!bg-white hover:!text-onyx-900">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/book" className="btn-primary px-10 py-3.5 text-base">Book Now</Link>
+              <Link to="/branches"
+                className="inline-flex items-center justify-center gap-2 px-10 py-3.5 rounded-xl border-2 border-white/20 text-white font-semibold text-base hover:border-white/40 transition-colors">
                 Find a Branch
               </Link>
             </div>

@@ -1,4 +1,3 @@
-// LoginPage.tsx
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -30,44 +29,55 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920')] bg-cover bg-center opacity-10" />
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative card-luxury max-w-md w-full p-8"
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-white rounded-2xl shadow-lg border border-gray-100 w-full max-w-md p-8"
       >
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-full bg-gold-gradient flex items-center justify-center mx-auto mb-4 shadow-gold">
-            <span className="text-white font-display font-bold text-xl">L</span>
+          <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-200">
+            <span className="text-white font-bold text-lg">L</span>
           </div>
-          <h1 className="font-display text-2xl font-bold text-onyx-900">Welcome Back</h1>
-          <p className="text-onyx-400 text-sm mt-1">Sign in to your LuxeSalon account</p>
+          <h1 className="font-bold text-2xl text-gray-900">Welcome back</h1>
+          <p className="text-gray-500 text-sm mt-1">Sign in to your LuxeSalon account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-onyx-700 mb-1.5">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="input-luxury" placeholder="you@example.com" required />
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <input
+              type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              className="input" placeholder="you@example.com" required
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-onyx-700 mb-1.5">Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="input-luxury" placeholder="••••••••" required />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <a href="#" className="text-xs text-purple-600 hover:text-purple-700 transition-colors">Forgot password?</a>
+            </div>
+            <input
+              type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              className="input" placeholder="••••••••" required
+            />
           </div>
-          <div className="flex justify-end">
-            <a href="#" className="text-xs text-gold-600 hover:text-gold-700">Forgot password?</a>
-          </div>
-          <button type="submit" disabled={isLoading} className="btn-gold w-full py-3.5 text-base disabled:opacity-60">
-            {isLoading ? 'Signing in...' : 'Sign In'}
+
+          <button
+            type="submit" disabled={isLoading}
+            className="btn-primary w-full py-3 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-          <p className="text-sm text-onyx-500">
+        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+          <p className="text-sm text-gray-500">
             Don't have an account?{' '}
-            <Link to="/register" className="text-gold-600 hover:text-gold-700 font-medium">Create one</Link>
+            <Link to="/register" className="text-purple-600 hover:text-purple-700 font-semibold transition-colors">
+              Create one
+            </Link>
           </p>
         </div>
       </motion.div>

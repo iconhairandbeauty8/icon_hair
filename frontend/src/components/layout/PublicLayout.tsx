@@ -12,6 +12,16 @@ const navLinks = [
   { label: 'Contact', to: '/contact' },
 ];
 
+const footerServices = ['Hair Styling', 'Colour & Highlights', 'Skincare', 'Nails', 'Beauty', 'Wellness'];
+const footerCompany = [
+  { label: 'Our Branches', to: '/branches' },
+  { label: 'Our Team', to: '/team' },
+  { label: 'Gallery', to: '/gallery' },
+  { label: 'Book Online', to: '/book' },
+  { label: 'Gift Vouchers', to: '/book' },
+  { label: 'Contact Us', to: '/contact' },
+];
+
 export default function PublicLayout() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -19,7 +29,7 @@ export default function PublicLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
+    const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handler);
     return () => window.removeEventListener('scroll', handler);
   }, []);
@@ -27,31 +37,30 @@ export default function PublicLayout() {
   useEffect(() => setMobileOpen(false), [location]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Navbar */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'bg-onyx-950/95 backdrop-blur-md shadow-luxury py-3' : 'bg-transparent py-5'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-white">
+
+      {/* ── Navbar ── */}
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 transition-shadow duration-300 ${scrolled ? 'shadow-sm' : ''}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-full bg-gold-gradient flex items-center justify-center shadow-gold">
-              <span className="text-white font-display font-bold text-lg">L</span>
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-sm">L</span>
             </div>
-            <div>
-              <div className="font-display font-bold text-xl text-white leading-none">LuxeSalon</div>
-              <div className="text-gold-400 text-xs font-accent italic tracking-widest">New Zealand</div>
-            </div>
+            <span className="font-bold text-gray-900 text-base tracking-tight">LuxeSalon</span>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`text-sm font-medium tracking-wide transition-colors duration-200 hover:text-gold-400 ${
-                  location.pathname === link.to ? 'text-gold-400' : 'text-white/80'
+                className={`text-sm font-medium transition-colors duration-150 ${
+                  location.pathname === link.to
+                    ? 'text-purple-600'
+                    : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 {link.label}
@@ -60,56 +69,66 @@ export default function PublicLayout() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {isAuthenticated ? (
               <Link
                 to={user?.role_name === 'customer' ? '/my' : '/admin'}
-                className="hidden sm:flex items-center gap-2 text-sm text-white/80 hover:text-gold-400 transition-colors"
+                className="hidden sm:flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-gold-gradient flex items-center justify-center text-white font-semibold text-xs">
+                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs">
                   {user?.first_name?.[0]}{user?.last_name?.[0]}
                 </div>
-                <span>{user?.first_name}</span>
+                <span className="hidden md:block">{user?.first_name}</span>
               </Link>
             ) : (
-              <Link to="/login" className="hidden sm:block text-sm text-white/80 hover:text-gold-400 transition-colors">
+              <Link to="/login" className="hidden sm:block text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
                 Sign In
               </Link>
             )}
-            <Link to="/book" className="btn-gold text-sm px-5 py-2.5">
+            <Link to="/book" className="btn-primary text-sm px-4 py-2 rounded-lg">
               Book Now
             </Link>
-            {/* Mobile menu toggle */}
+            {/* Mobile toggle */}
             <button
-              className="lg:hidden text-white p-2"
+              className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle menu"
             >
-              <div className={`w-6 h-0.5 bg-current transition-all mb-1.5 ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <div className={`w-6 h-0.5 bg-current transition-all mb-1.5 ${mobileOpen ? 'opacity-0' : ''}`} />
-              <div className={`w-6 h-0.5 bg-current transition-all ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              <div className={`w-5 h-0.5 bg-current transition-all duration-200 ${mobileOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+              <div className={`w-5 h-0.5 bg-current my-1 transition-all duration-200 ${mobileOpen ? 'opacity-0' : ''}`} />
+              <div className={`w-5 h-0.5 bg-current transition-all duration-200 ${mobileOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile Menu */}
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-onyx-950/98 backdrop-blur-md border-t border-white/10"
+              transition={{ duration: 0.2 }}
+              className="lg:hidden border-t border-gray-100 bg-white overflow-hidden"
             >
-              <div className="px-4 py-4 flex flex-col gap-3">
+              <div className="px-4 py-3 space-y-1">
                 {navLinks.map((link) => (
-                  <Link key={link.to} to={link.to}
-                    className="text-white/80 hover:text-gold-400 py-2 text-sm font-medium transition-colors"
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === link.to
+                        ? 'text-purple-600 bg-purple-50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
                   >
                     {link.label}
                   </Link>
                 ))}
                 {!isAuthenticated && (
-                  <Link to="/login" className="text-white/80 hover:text-gold-400 py-2 text-sm">Sign In</Link>
+                  <Link to="/login" className="flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                    Sign In
+                  </Link>
                 )}
               </div>
             </motion.div>
@@ -117,10 +136,13 @@ export default function PublicLayout() {
         </AnimatePresence>
       </header>
 
-      {/* Sticky book now on mobile */}
+      {/* Spacer for fixed navbar */}
+      <div className="h-16 shrink-0" />
+
+      {/* Mobile sticky CTA */}
       <div className="fixed bottom-4 left-4 right-4 z-40 sm:hidden">
-        <Link to="/book" className="btn-gold w-full text-center block py-4 text-base rounded-2xl shadow-luxury">
-          ✨ Book Appointment
+        <Link to="/book" className="btn-primary w-full justify-center rounded-xl py-3.5 shadow-lg shadow-purple-200">
+          Book Appointment
         </Link>
       </div>
 
@@ -128,61 +150,77 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className="bg-onyx-950 text-white pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gold-gradient flex items-center justify-center">
-                  <span className="text-white font-display font-bold text-lg">L</span>
+      {/* ── Footer ── */}
+      <footer className="bg-white border-t border-gray-100 pt-14 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <Link to="/" className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">L</span>
                 </div>
-                <div>
-                  <div className="font-display font-bold text-xl">LuxeSalon NZ</div>
-                  <div className="text-gold-400 text-xs font-accent italic">Premium Salon Experience</div>
-                </div>
-              </div>
-              <p className="text-white/60 text-sm leading-relaxed max-w-sm">
-                New Zealand's premier multi-branch salon network. Expert stylists, luxury services, and an unforgettable experience.
+                <span className="font-bold text-gray-900">LuxeSalon</span>
+              </Link>
+              <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                New Zealand's premier multi-branch salon network. Expert stylists, luxury services.
               </p>
-              <div className="flex gap-3 mt-4">
-                {['Instagram', 'Facebook', 'TikTok'].map((s) => (
-                  <a key={s} href="#" className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-xs text-white/60 hover:border-gold-500 hover:text-gold-400 transition-colors">
-                    {s[0]}
+              <div className="flex gap-2.5 mt-5">
+                {['In', 'Fb', 'Tk'].map((s) => (
+                  <a key={s} href="#"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 hover:border-purple-300 hover:text-purple-600 transition-colors">
+                    {s}
                   </a>
                 ))}
               </div>
             </div>
+
+            {/* Services */}
             <div>
-              <h4 className="font-semibold text-gold-400 mb-4 text-sm tracking-wider uppercase">Services</h4>
-              <ul className="space-y-2 text-sm text-white/60">
-                {['Hair Styling', 'Colour & Highlights', 'Skincare', 'Nails', 'Beauty', 'Wellness'].map((s) => (
-                  <li key={s}><Link to="/services" className="hover:text-gold-400 transition-colors">{s}</Link></li>
+              <p className="section-label mb-4">Services</p>
+              <ul className="space-y-2.5">
+                {footerServices.map((s) => (
+                  <li key={s}>
+                    <Link to="/services" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                      {s}
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>
+
+            {/* Company */}
             <div>
-              <h4 className="font-semibold text-gold-400 mb-4 text-sm tracking-wider uppercase">Company</h4>
-              <ul className="space-y-2 text-sm text-white/60">
-                {[
-                  { label: 'Our Branches', to: '/branches' },
-                  { label: 'Our Team', to: '/team' },
-                  { label: 'Gallery', to: '/gallery' },
-                  { label: 'Book Online', to: '/book' },
-                  { label: 'Gift Vouchers', to: '/book' },
-                  { label: 'Contact Us', to: '/contact' },
-                ].map((l) => (
-                  <li key={l.label}><Link to={l.to} className="hover:text-gold-400 transition-colors">{l.label}</Link></li>
+              <p className="section-label mb-4">Company</p>
+              <ul className="space-y-2.5">
+                {footerCompany.map((l) => (
+                  <li key={l.label}>
+                    <Link to={l.to} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
                 ))}
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <p className="section-label mb-4">Contact</p>
+              <ul className="space-y-2.5 text-sm text-gray-500">
+                <li>Auckland, New Zealand</li>
+                <li><a href="tel:+6491234567" className="hover:text-gray-900 transition-colors">+64 9 123 4567</a></li>
+                <li><a href="mailto:hello@luxesalon.nz" className="hover:text-gray-900 transition-colors">hello@luxesalon.nz</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-white/40 text-sm">© 2024 LuxeSalon NZ. All rights reserved.</p>
-            <div className="flex gap-4 text-sm text-white/40">
-              <a href="#" className="hover:text-gold-400">Privacy Policy</a>
-              <a href="#" className="hover:text-gold-400">Terms of Service</a>
-              <a href="#" className="hover:text-gold-400">Cookie Policy</a>
+
+          <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <p className="text-gray-400 text-xs">© 2024 LuxeSalon NZ. All rights reserved.</p>
+            <div className="flex gap-5 text-xs text-gray-400">
+              <a href="#" className="hover:text-gray-600 transition-colors">Privacy</a>
+              <a href="#" className="hover:text-gray-600 transition-colors">Terms</a>
+              <a href="#" className="hover:text-gray-600 transition-colors">Cookies</a>
             </div>
           </div>
         </div>

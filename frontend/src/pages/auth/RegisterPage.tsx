@@ -5,7 +5,9 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', password: '', confirm: '' });
+  const [form, setForm] = useState({
+    first_name: '', last_name: '', email: '', phone: '', password: '', confirm: '',
+  });
   const { register, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
@@ -17,10 +19,13 @@ export default function RegisterPage() {
     if (form.password !== form.confirm) { toast.error('Passwords do not match'); return; }
     if (form.password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     try {
-      const payload: Record<string, string> = { first_name: form.first_name, last_name: form.last_name, email: form.email, password: form.password };
+      const payload: Record<string, string> = {
+        first_name: form.first_name, last_name: form.last_name,
+        email: form.email, password: form.password,
+      };
       if (form.phone.trim()) payload.phone = form.phone.trim();
       await register(payload);
-      toast.success('Account created! Welcome to LuxeSalon 🎉');
+      toast.success('Account created! Welcome to LuxeSalon');
       navigate('/');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Registration failed');
@@ -28,58 +33,75 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory flex items-center justify-center px-4 py-12">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card-luxury max-w-md w-full p-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-white rounded-2xl shadow-lg border border-gray-100 w-full max-w-md p-8"
+      >
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-full bg-gold-gradient flex items-center justify-center mx-auto mb-4 shadow-gold">
-            <span className="text-white font-display font-bold text-xl">L</span>
+          <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-200">
+            <span className="text-white font-bold text-lg">L</span>
           </div>
-          <h1 className="font-display text-2xl font-bold text-onyx-900">Create Account</h1>
-          <p className="text-onyx-400 text-sm mt-1">Join LuxeSalon NZ today</p>
+          <h1 className="font-bold text-2xl text-gray-900">Create account</h1>
+          <p className="text-gray-500 text-sm mt-1">Join LuxeSalon NZ today</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3">
+          {/* Name row */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-onyx-700 mb-1.5">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
               <input name="first_name" value={form.first_name} onChange={handleChange}
-                className="input-luxury" placeholder="Jane" required />
+                className="input" placeholder="Jane" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-onyx-700 mb-1.5">Last Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Last Name</label>
               <input name="last_name" value={form.last_name} onChange={handleChange}
-                className="input-luxury" placeholder="Smith" required />
+                className="input" placeholder="Smith" required />
             </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-onyx-700 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
             <input name="email" type="email" value={form.email} onChange={handleChange}
-              className="input-luxury" placeholder="jane@example.com" required />
+              className="input" placeholder="jane@example.com" required />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-onyx-700 mb-1.5">Phone (NZ)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone <span className="text-gray-400 font-normal">(optional)</span></label>
             <input name="phone" type="tel" value={form.phone} onChange={handleChange}
-              className="input-luxury" placeholder="+64 21 000 0000" />
+              className="input" placeholder="+64 21 000 0000" />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-onyx-700 mb-1.5">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
             <input name="password" type="password" value={form.password} onChange={handleChange}
-              className="input-luxury" placeholder="Min. 8 characters" required />
+              className="input" placeholder="Min. 8 characters" required />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-onyx-700 mb-1.5">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
             <input name="confirm" type="password" value={form.confirm} onChange={handleChange}
-              className="input-luxury" placeholder="Repeat password" required />
+              className="input" placeholder="Repeat password" required />
           </div>
-          <button type="submit" disabled={isLoading} className="btn-gold w-full py-3.5 text-base disabled:opacity-60">
-            {isLoading ? 'Creating account...' : 'Create Account'}
+
+          <button
+            type="submit" disabled={isLoading}
+            className="btn-primary w-full py-3 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Creating account…' : 'Create Account'}
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-          <p className="text-sm text-onyx-500">
+        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+          <p className="text-sm text-gray-500">
             Already have an account?{' '}
-            <Link to="/login" className="text-gold-600 hover:text-gold-700 font-medium">Sign in</Link>
+            <Link to="/login" className="text-purple-600 hover:text-purple-700 font-semibold transition-colors">
+              Sign in
+            </Link>
           </p>
         </div>
       </motion.div>
