@@ -48,6 +48,15 @@ export default function HomePage() {
   };
   const handleBannerMouseLeave = () => setTilt({ sscX: 0, aaX: 0, aaShiftX: 0, aaShiftY: 0 });
 
+  const handleBannerTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = ((touch.clientY - rect.top) / rect.height) * 2 - 1;
+    const x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+    setTilt({ sscX: y * 18, aaX: -y * 18, aaShiftX: x * 24, aaShiftY: y * 24 });
+  };
+  const handleBannerTouchEnd = () => setTilt({ sscX: 0, aaX: 0, aaShiftX: 0, aaShiftY: 0 });
+
   const { data: reviews } = useQuery({ queryKey: ['reviews-home'], queryFn: () => reviewApi.list({ limit: 6 }) });
   const { data: services } = useQuery({ queryKey: ['services-home'], queryFn: () => serviceApi.list() });
   const { data: staff } = useQuery({ queryKey: ['staff-home'], queryFn: () => staffApi.list() });
@@ -251,7 +260,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           5. PARALLAX BANNER
       ══════════════════════════════════════════════════════ */}
-      <section ref={bannerRef} onMouseMove={handleBannerMouseMove} onMouseLeave={handleBannerMouseLeave}
+      <section ref={bannerRef} onMouseMove={handleBannerMouseMove} onMouseLeave={handleBannerMouseLeave} onTouchMove={handleBannerTouchMove} onTouchEnd={handleBannerTouchEnd}
         className="relative flex items-center justify-center overflow-hidden bg-white py-16 sm:py-0 sm:h-[420px]">
 
         {/* Images — visible on all screen sizes */}
