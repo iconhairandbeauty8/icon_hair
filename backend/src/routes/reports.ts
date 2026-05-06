@@ -1,23 +1,26 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
 
-// GET /api/reports/revenue
-router.get('/revenue', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { branch_id, period = 'monthly', date_from, date_to } = req.query;
+const router = express.Router();
+
+router.get('/revenue', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
+  const period = (req.query.period as string) ?? 'monthly';
+  const date_from = req.query.date_from as string | undefined;
+  const date_to = req.query.date_to as string | undefined;
 
   try {
-    let groupBy, dateFormat;
+    let groupBy: string;
     switch (period) {
-      case 'daily':   groupBy = "DATE(b.start_time)"; dateFormat = 'YYYY-MM-DD'; break;
-      case 'weekly':  groupBy = "DATE_TRUNC('week', b.start_time)"; dateFormat = 'IYYY-IW'; break;
-      case 'monthly': groupBy = "DATE_TRUNC('month', b.start_time)"; dateFormat = 'YYYY-MM'; break;
-      default:        groupBy = "DATE_TRUNC('month', b.start_time)";
+      case 'daily':   groupBy = 'DATE(b.start_time)'; break;
+      case 'weekly':  groupBy = "DATE_TRUNC('week', b.start_time)"; break;
+      case 'monthly':
+      default:        groupBy = "DATE_TRUNC('month', b.start_time)"; break;
     }
 
-    const params = [];
-    let conditions = ["b.status = 'completed'"];
+    const params: unknown[] = [];
+    const conditions: string[] = ["b.status = 'completed'"];
     let idx = 1;
 
     if (branch_id) { conditions.push(`b.branch_id = $${idx++}`); params.push(branch_id); }
@@ -40,17 +43,18 @@ router.get('/revenue', authenticate, authorize('admin', 'manager'), async (req, 
 
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/reports/staff-performance
-router.get('/staff-performance', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { branch_id, date_from, date_to } = req.query;
+router.get('/staff-performance', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
+  const date_from = req.query.date_from as string | undefined;
+  const date_to = req.query.date_to as string | undefined;
 
   try {
-    const params = [];
-    let conditions = ["b.status = 'completed'"];
+    const params: unknown[] = [];
+    const conditions: string[] = ["b.status = 'completed'"];
     let idx = 1;
 
     if (branch_id) { conditions.push(`b.branch_id = $${idx++}`); params.push(branch_id); }
@@ -81,22 +85,19 @@ router.get('/staff-performance', authenticate, authorize('admin', 'manager'), as
 
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/reports/services-analysis
-router.get('/services-analysis', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { branch_id, date_from, date_to } = req.query;
+router.get('/services-analysis', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
+  const date_from = req.query.date_from as string | undefined;
+  const date_to = req.query.date_to as string | undefined;
 
   try {
     const result = await db.query(`
       SELECT
-        s.id,
-        s.name,
-        s.category,
-        s.price,
-        s.duration_minutes,
+        s.id, s.name, s.category, s.price, s.duration_minutes,
         COUNT(b.id) as booking_count,
         SUM(b.price) as total_revenue,
         AVG(r.rating) as avg_rating
@@ -109,24 +110,20 @@ router.get('/services-analysis', authenticate, authorize('admin', 'manager'), as
       GROUP BY s.id
       ORDER BY booking_count DESC
     `);
-
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/reports/customer-analytics
-router.get('/customer-analytics', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { branch_id } = req.query;
+router.get('/customer-analytics', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
 
   try {
     const result = await db.query(`
       SELECT
-        u.id,
-        u.first_name || ' ' || u.last_name as name,
-        u.email,
-        u.phone,
+        u.id, u.first_name || ' ' || u.last_name as name,
+        u.email, u.phone,
         COUNT(b.id) as total_visits,
         SUM(b.price) as total_spent,
         AVG(b.price) as avg_spend,
@@ -143,23 +140,20 @@ router.get('/customer-analytics', authenticate, authorize('admin', 'manager'), a
       GROUP BY u.id, lp.membership_tier
       ORDER BY total_spent DESC
     `);
-
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/reports/branch-comparison
-router.get('/branch-comparison', authenticate, authorize('admin'), async (req, res) => {
-  const { date_from, date_to } = req.query;
+router.get('/branch-comparison', authenticate, authorize('admin'), async (req: Request, res: Response) => {
+  const date_from = req.query.date_from as string | undefined;
+  const date_to = req.query.date_to as string | undefined;
 
   try {
     const result = await db.query(`
       SELECT
-        br.id,
-        br.name,
-        br.city,
+        br.id, br.name, br.city,
         COUNT(DISTINCT b.id) as total_bookings,
         SUM(CASE WHEN b.status = 'completed' THEN b.price ELSE 0 END) as total_revenue,
         COUNT(DISTINCT b.customer_id) as unique_customers,
@@ -176,38 +170,24 @@ router.get('/branch-comparison', authenticate, authorize('admin'), async (req, r
       GROUP BY br.id
       ORDER BY total_revenue DESC
     `);
-
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/reports/dashboard-summary
-router.get('/dashboard-summary', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { branch_id } = req.query;
+router.get('/dashboard-summary', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
   const today = new Date().toISOString().split('T')[0];
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  const branchCondition = branch_id ? `AND branch_id = '${branch_id}'` : '';
 
   try {
-    const branchCondition = branch_id ? `AND branch_id = '${branch_id}'` : '';
-
     const [todayStats, monthStats, pendingBookings, lowStockItems] = await Promise.all([
-      db.query(`
-        SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue
-        FROM bookings WHERE DATE(start_time) = $1 AND status = 'completed' ${branchCondition}
-      `, [today]),
-      db.query(`
-        SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue
-        FROM bookings WHERE start_time >= $1 AND status = 'completed' ${branchCondition}
-      `, [monthStart]),
-      db.query(`
-        SELECT COUNT(*) as count FROM bookings WHERE status = 'pending' ${branchCondition}
-      `),
-      db.query(`
-        SELECT COUNT(*) as count FROM inventory_items
-        WHERE quantity <= reorder_point ${branch_id ? `AND branch_id = '${branch_id}'` : ''}
-      `),
+      db.query(`SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue FROM bookings WHERE DATE(start_time) = $1 AND status = 'completed' ${branchCondition}`, [today]),
+      db.query(`SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue FROM bookings WHERE start_time >= $1 AND status = 'completed' ${branchCondition}`, [monthStart]),
+      db.query(`SELECT COUNT(*) as count FROM bookings WHERE status = 'pending' ${branchCondition}`),
+      db.query(`SELECT COUNT(*) as count FROM inventory_items WHERE quantity <= reorder_point ${branch_id ? `AND branch_id = '${branch_id}'` : ''}`),
     ]);
 
     res.json({
@@ -217,8 +197,8 @@ router.get('/dashboard-summary', authenticate, authorize('admin', 'manager'), as
       low_stock_alerts: lowStockItems.rows[0].count,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-module.exports = router;
+export default router;

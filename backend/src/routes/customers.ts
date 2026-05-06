@@ -1,16 +1,19 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
 
-router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { search, page = 1, limit = 20 } = req.query;
+const router = express.Router();
+
+router.get('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const search = req.query.search as string | undefined;
+  const page = Number(req.query.page ?? 1);
+  const limit = Number(req.query.limit ?? 20);
   const offset = (page - 1) * limit;
   try {
-    let conditions = ["r.name = 'customer'"];
-    let params = [];
+    const conditions: string[] = ["r.name = 'customer'"];
+    const params: unknown[] = [];
     if (search) {
-      conditions.push(`(u.first_name ILIKE $${params.length+1} OR u.last_name ILIKE $${params.length+1} OR u.email ILIKE $${params.length+1})`);
+      conditions.push(`(u.first_name ILIKE $${params.length + 1} OR u.last_name ILIKE $${params.length + 1} OR u.email ILIKE $${params.length + 1})`);
       params.push(`%${search}%`);
     }
     params.push(limit, offset);
@@ -27,10 +30,12 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
       WHERE ${conditions.join(' AND ')}
       GROUP BY u.id, lp.membership_tier
       ORDER BY u.created_at DESC
-      LIMIT $${params.length-1} OFFSET $${params.length}
+      LIMIT $${params.length - 1} OFFSET $${params.length}
     `, params);
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
-module.exports = router;
+export default router;

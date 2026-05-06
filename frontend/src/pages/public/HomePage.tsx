@@ -70,7 +70,8 @@ export default function HomePage() {
         <video
           autoPlay muted loop playsInline
           poster="/images/hero.png"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover sm:object-center"
+          style={{ objectPosition: '65% 15%' }}
         >
           <source src="/images/herov.mp4" type="video/mp4" />
         </video>
@@ -130,7 +131,7 @@ export default function HomePage() {
           {/* Trust strip */}
           <motion.div
             initial="hidden" animate="visible" variants={fadeUp} custom={5}
-            className="flex flex-wrap items-center justify-center gap-6 mt-10 text-black text-sm font-medium"
+            className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-10 text-black text-xs sm:text-sm font-medium"
           >
             {['200+ Stylists', '12 Locations', 'Easy Online Booking', 'No Booking Fees'].map((t) => (
               <span key={t} className="flex items-center gap-1.5">
@@ -169,10 +170,10 @@ export default function HomePage() {
         </video>
         {/* Dark overlay so cards stay readable */}
         <div className="absolute inset-0 bg-black/55" />
-        {/* Blend top edge into white (from above section) */}
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/70 via-white/20 to-transparent" />
-        {/* Blend bottom edge into next section */}
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white/70 via-white/20 to-transparent" />
+        {/* Blend top edge into white */}
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white via-white/60 to-transparent" />
+        {/* Blend bottom edge into white */}
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white via-white/60 to-transparent" />
 
         <div className="relative z-10 py-24 px-4">
           <div className="max-w-7xl mx-auto">
@@ -250,11 +251,13 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           5. PARALLAX BANNER
       ══════════════════════════════════════════════════════ */}
-      <section ref={bannerRef} onMouseMove={handleBannerMouseMove} onMouseLeave={handleBannerMouseLeave} className="relative h-[420px] flex items-center justify-center overflow-hidden bg-white">
-        {/* Images — aa.png left, ssc.png right, both rotating opposite directions */}
-        <div className="absolute inset-0 flex items-center justify-center gap-16" style={{ perspective: '900px' }}>
+      <section ref={bannerRef} onMouseMove={handleBannerMouseMove} onMouseLeave={handleBannerMouseLeave}
+        className="relative flex items-center justify-center overflow-hidden bg-white py-16 sm:py-0 sm:h-[420px]">
+
+        {/* Images — visible on all screen sizes */}
+        <div className="flex absolute inset-0 items-center justify-center gap-6 sm:gap-16" style={{ perspective: '900px' }}>
           <div
-            className="w-52 h-72 overflow-hidden rounded-lg opacity-100 shrink-0"
+            className="w-36 h-52 sm:w-52 sm:h-72 overflow-hidden rounded-lg opacity-100 shrink-0"
             style={{
               transform: `translateX(${tilt.aaShiftX}px) translateY(${tilt.aaShiftY}px) rotateX(${tilt.aaX}deg) rotate(-8deg)`,
               transition: 'transform 0.3s ease-out',
@@ -265,7 +268,7 @@ export default function HomePage() {
           <img
             src="/images/ssc.png"
             alt=""
-            className="h-48 w-auto object-contain opacity-100"
+            className="h-36 sm:h-48 w-auto object-contain opacity-100"
             style={{
               transform: `translateX(${-tilt.aaShiftX}px) translateY(${-tilt.aaShiftY}px) rotateX(${tilt.sscX}deg) rotate(98deg)`,
               transition: 'transform 0.3s ease-out',
@@ -273,15 +276,15 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 text-center px-4 max-w-2xl mx-auto">
+        <div className="relative z-10 text-center px-4 max-w-xl mx-auto">
           <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
             className="section-label mb-4">The Finest Care</motion.p>
           <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
-            className="section-title mb-6">
+            className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6">
             Your Beauty, Our Passion
           </motion.h2>
           <motion.div initial="hidden" whileInView="visible" variants={fadeUp} custom={2} viewport={{ once: true }}>
-            <Link to="/book" className="btn-primary px-10 py-3.5">Book Your Experience</Link>
+            <Link to="/book" className="btn-primary px-8 sm:px-10 py-3.5">Book Your Experience</Link>
           </motion.div>
         </div>
       </section>
@@ -289,9 +292,9 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           6. TEAM
       ══════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 bg-white">
+      <section className="py-14 sm:py-24 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
               className="section-label mb-3">The Artists</motion.p>
             <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
@@ -346,9 +349,9 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           7. REVIEWS
       ══════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 bg-gray-50">
+      <section className="py-14 sm:py-24 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
               className="section-label mb-3">Client Love</motion.p>
             <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
@@ -386,7 +389,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           8. CTA
       ══════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 bg-gray-950">
+      <section className="py-14 sm:py-24 px-4 bg-gray-950">
         <div className="max-w-2xl mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
             <p className="section-label text-purple-400 mb-4">Ready to Transform?</p>

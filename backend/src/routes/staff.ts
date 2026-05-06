@@ -1,13 +1,12 @@
-const express = require('express');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
+import { PoolClient } from 'pg';
+
 const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
 
-// ===================== STAFF =====================
-
-// GET /api/staff
-router.get('/', async (req, res) => {
-  const { branch_id } = req.query;
+router.get('/', async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
   try {
     const result = await db.query(`
       SELECT e.*,
@@ -27,14 +26,17 @@ router.get('/', async (req, res) => {
     `, branch_id ? [branch_id] : []);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// POST /api/staff
-router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { first_name, last_name, email, phone, role, branch_id, bio, image_url, experience_years, service_ids, schedule } = req.body;
-  const client = await db.getClient();
+router.post('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const { first_name, last_name, email, phone, role, branch_id, bio, image_url, experience_years, service_ids, schedule } = req.body as {
+    first_name: string; last_name: string; email?: string; phone?: string;
+    role: string; branch_id: string; bio?: string; image_url?: string;
+    experience_years?: number; service_ids?: string[]; schedule?: object;
+  };
+  const client: PoolClient = await db.getClient();
   try {
     await client.query('BEGIN');
     const result = await client.query(`
@@ -52,17 +54,20 @@ router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) =
     res.status(201).json(employee);
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('POST /staff error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('POST /staff error:', (err as Error).message);
+    res.status(500).json({ error: (err as Error).message });
   } finally {
     client.release();
   }
 });
 
-// PUT /api/staff/:id
-router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { first_name, last_name, email, phone, role, bio, image_url, experience_years, service_ids, schedule, is_active } = req.body;
-  const client = await db.getClient();
+router.put('/:id', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const { first_name, last_name, email, phone, role, bio, image_url, experience_years, service_ids, schedule, is_active } = req.body as {
+    first_name: string; last_name: string; email?: string; phone?: string;
+    role: string; bio?: string; image_url?: string; experience_years?: number;
+    service_ids?: string[]; schedule?: object; is_active?: boolean;
+  };
+  const client: PoolClient = await db.getClient();
   try {
     await client.query('BEGIN');
     const result = await client.query(`
@@ -70,20 +75,17 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
         image_url=$7, experience_years=$8, schedule=$9, is_active=$10, updated_at=NOW()
       WHERE id=$11 RETURNING *
     `, [
-      first_name,
-      last_name,
-      email || null,
-      phone || null,
-      role,
-      bio || null,
-      image_url || null,
-      experience_years || 0,
-      JSON.stringify(schedule || {}),   // ← was crashing: JSON.stringify(undefined) = undefined
+      first_name, last_name, email || null, phone || null, role,
+      bio || null, image_url || null, experience_years || 0,
+      JSON.stringify(schedule || {}),
       is_active !== undefined ? is_active : true,
       req.params.id,
     ]);
 
-    if (!result.rows[0]) return res.status(404).json({ error: 'Staff member not found' });
+    if (!result.rows[0]) {
+      res.status(404).json({ error: 'Staff member not found' });
+      return;
+    }
 
     if (service_ids !== undefined) {
       await client.query('DELETE FROM employee_services WHERE employee_id = $1', [req.params.id]);
@@ -95,12 +97,11 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     res.json(result.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('PUT /staff error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('PUT /staff error:', (err as Error).message);
+    res.status(500).json({ error: (err as Error).message });
   } finally {
     client.release();
   }
 });
 
-
-module.exports = router;
+export default router;

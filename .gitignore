@@ -25,6 +25,12 @@ pgdata/
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/uploads/**/*
+!backend/uploads/**/.gitkeep
+
+# Logs (keep folder structure, not content)
+backend/logs/*
+!backend/logs/.gitkeep
 
 # OS
 .DS_Store

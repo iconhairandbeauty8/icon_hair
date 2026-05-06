@@ -1,14 +1,17 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
+import { PoolClient } from 'pg';
 
-// GET /api/services
-router.get('/', async (req, res) => {
-  const { branch_id, category, employee_id } = req.query;
+const router = express.Router();
+
+router.get('/', async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
+  const category = req.query.category as string | undefined;
+  const employee_id = req.query.employee_id as string | undefined;
   try {
-    let conditions = ['s.is_active = true'];
-    let params = [];
+    const conditions: string[] = ['s.is_active = true'];
+    const params: unknown[] = [];
     let idx = 1;
 
     if (branch_id) {
@@ -38,12 +41,11 @@ router.get('/', async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/services/categories
-router.get('/categories', async (req, res) => {
+router.get('/categories', async (_req: Request, res: Response) => {
   try {
     const result = await db.query(`
       SELECT category, COUNT(*) as service_count FROM services
@@ -51,14 +53,16 @@ router.get('/categories', async (req, res) => {
     `);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// POST /api/services
-router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { name, category, description, price, duration_minutes, image_url, branch_ids } = req.body;
-  const client = await db.getClient();
+router.post('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const { name, category, description, price, duration_minutes, image_url, branch_ids } = req.body as {
+    name: string; category: string; description: string; price: number;
+    duration_minutes: number; image_url: string; branch_ids?: string[];
+  };
+  const client: PoolClient = await db.getClient();
   try {
     await client.query('BEGIN');
     const result = await client.query(`
@@ -76,16 +80,18 @@ router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) =
     res.status(201).json(service);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   } finally {
     client.release();
   }
 });
 
-// PUT /api/services/:id
-router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { name, category, description, price, duration_minutes, image_url, is_active, branch_ids } = req.body;
-  const client = await db.getClient();
+router.put('/:id', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const { name, category, description, price, duration_minutes, image_url, is_active, branch_ids } = req.body as {
+    name: string; category: string; description: string; price: number;
+    duration_minutes: number; image_url: string; is_active?: boolean; branch_ids?: string[];
+  };
+  const client: PoolClient = await db.getClient();
   try {
     await client.query('BEGIN');
     const result = await client.query(`
@@ -93,7 +99,10 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
         image_url=$6, is_active=$7, updated_at=NOW() WHERE id=$8 RETURNING *
     `, [name, category, description, price, duration_minutes, image_url, is_active ?? true, req.params.id]);
 
-    if (!result.rows[0]) return res.status(404).json({ error: 'Service not found' });
+    if (!result.rows[0]) {
+      res.status(404).json({ error: 'Service not found' });
+      return;
+    }
 
     if (branch_ids !== undefined) {
       await client.query('DELETE FROM branch_services WHERE service_id = $1', [req.params.id]);
@@ -105,10 +114,10 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     res.json(result.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   } finally {
     client.release();
   }
 });
 
-module.exports = router;
+export default router;

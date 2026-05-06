@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
 
-// LOYALTY
-router.get('/profile', authenticate, async (req, res) => {
+const router = express.Router();
+
+router.get('/profile', authenticate, async (req: Request, res: Response) => {
   try {
     const result = await db.query(`
       SELECT lp.*, COALESCE(SUM(pts.points), 0) as total_points
@@ -12,12 +12,14 @@ router.get('/profile', authenticate, async (req, res) => {
       LEFT JOIN loyalty_points pts ON pts.customer_id = lp.customer_id
       WHERE lp.customer_id = $1
       GROUP BY lp.id
-    `, [req.user.id]);
+    `, [req.user!.id]);
     res.json(result.rows[0] || { membership_tier: 'standard', total_points: 0 });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
-router.get('/customers', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/customers', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
   try {
     const result = await db.query(`
       SELECT u.id, u.first_name, u.last_name, u.email, u.phone,
@@ -31,7 +33,9 @@ router.get('/customers', authenticate, authorize('admin', 'manager'), async (req
       ORDER BY total_points DESC
     `);
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
-module.exports = router;
+export default router;

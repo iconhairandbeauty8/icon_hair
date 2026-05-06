@@ -1,10 +1,11 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
 
-router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  const { branch_id } = req.query;
+const router = express.Router();
+
+router.get('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
+  const branch_id = req.query.branch_id as string | undefined;
   const today = new Date().toISOString().split('T')[0];
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -54,7 +55,9 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
       top_services: topServices.rows,
       staff_on_duty: staffOnDuty.rows,
     });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
-module.exports = router;
+export default router;

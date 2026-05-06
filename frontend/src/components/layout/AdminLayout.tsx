@@ -39,13 +39,13 @@ export default function AdminLayout() {
     <>
       {/* Logo */}
       <div className="p-4 border-b border-white/10 flex items-center gap-3 flex-shrink-0">
-        <div className="w-9 h-9 rounded-full bg-gold-gradient flex-shrink-0 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-gold-gradient flex-shrink-0 flex items-center justify-center">
           <span className="text-white font-bold text-sm">L</span>
         </div>
         {showLabels && (
           <div className="overflow-hidden flex-1">
             <div className="font-display text-white font-bold text-sm">LuxeSalon</div>
-            <div className="text-gold-400 text-[10px] font-accent italic">Admin Portal</div>
+            <div className="text-gold-400 text-[10px] tracking-wider uppercase">Admin Portal</div>
           </div>
         )}
         {/* Close on mobile */}
@@ -86,7 +86,7 @@ export default function AdminLayout() {
           {showLabels && (
             <div className="flex-1 overflow-hidden">
               <div className="text-white text-sm font-medium truncate">{user?.first_name} {user?.last_name}</div>
-              <div className="text-gold-400 text-xs capitalize">{user?.role_name}</div>
+              <div className="text-gold-400 text-[10px] tracking-widest uppercase">{user?.role_name}</div>
             </div>
           )}
         </div>

@@ -1,13 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/database');
-const { authenticate, authorize } = require('../middleware/auth');
+import express, { Request, Response } from 'express';
+import db from '../config/database';
+import { authenticate, authorize } from '../middleware/auth';
 
-// GET /api/branches - public list
-router.get('/', async (req, res) => {
+const router = express.Router();
+
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const result = await db.query(`
-      SELECT b.*, 
+      SELECT b.*,
         COUNT(DISTINCT e.id) as staff_count,
         COUNT(DISTINCT bs.id) as service_count,
         COALESCE(AVG(r.rating), 0) as avg_rating
@@ -21,12 +21,11 @@ router.get('/', async (req, res) => {
     `);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// GET /api/branches/:id
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const result = await db.query(`
       SELECT b.*,
@@ -39,15 +38,17 @@ router.get('/:id', async (req, res) => {
       WHERE b.id = $1
       GROUP BY b.id
     `, [req.params.id]);
-    if (!result.rows[0]) return res.status(404).json({ error: 'Branch not found' });
+    if (!result.rows[0]) {
+      res.status(404).json({ error: 'Branch not found' });
+      return;
+    }
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// POST /api/branches - admin only
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('admin'), async (req: Request, res: Response) => {
   const { name, address, city, suburb, phone, email, description, latitude, longitude, opening_hours, image_url } = req.body;
   try {
     const result = await db.query(
@@ -57,12 +58,11 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// PUT /api/branches/:id
-router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.put('/:id', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
   const { name, address, city, suburb, phone, email, description, latitude, longitude, opening_hours, image_url, is_active } = req.body;
   try {
     const result = await db.query(
@@ -73,18 +73,17 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-// DELETE /api/branches/:id
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), async (req: Request, res: Response) => {
   try {
     await db.query('UPDATE branches SET is_active = false WHERE id = $1', [req.params.id]);
     res.json({ message: 'Branch deactivated' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-module.exports = router;
+export default router;
