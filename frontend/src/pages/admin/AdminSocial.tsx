@@ -10,7 +10,7 @@ export default function AdminSocial() {
   const [form, setForm] = useState({ title:'', content:'', type:'post', image_urls: [] as string[] });
 
   const { data } = useQuery({ queryKey:['social-admin'], queryFn: socialApi.list });
-  const posts = data?.data || [];
+  const posts = Array.isArray(data?.data) ? data.data : [];
 
   const create = useMutation({
     mutationFn: (d:any) => socialApi.create({ ...d, image_urls: d.image_urls.filter(Boolean) }),

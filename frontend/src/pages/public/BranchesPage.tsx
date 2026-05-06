@@ -6,7 +6,7 @@ import { branchApi } from '../../services/api';
 
 export function BranchesPage() {
   const { data, isLoading } = useQuery({ queryKey: ['branches-pub'], queryFn: branchApi.list });
-  const branches = data?.data || [];
+  const branches = Array.isArray(data?.data) ? data.data : [];
   const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
   return (

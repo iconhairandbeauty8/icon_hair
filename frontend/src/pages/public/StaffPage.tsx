@@ -5,7 +5,7 @@ import { staffApi } from '../../services/api';
 
 export default function StaffPage() {
   const { data, isLoading } = useQuery({ queryKey: ['staff-pub'], queryFn: () => staffApi.list() });
-  const staff = data?.data || [];
+  const staff = Array.isArray(data?.data) ? data.data : [];
 
   return (
     <div className="min-h-screen pt-20">

@@ -6,7 +6,7 @@ import { customerApi } from '../../services/api';
 export default function AdminCustomers() {
   const [search, setSearch] = useState('');
   const { data, isLoading } = useQuery({ queryKey:['customers', search], queryFn:()=>customerApi.list({search}) });
-  const customers = data?.data || [];
+  const customers = Array.isArray(data?.data) ? data.data : [];
 
   return (
     <div className="space-y-5">

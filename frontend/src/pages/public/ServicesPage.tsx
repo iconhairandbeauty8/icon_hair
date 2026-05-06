@@ -11,7 +11,7 @@ export function ServicesPage() {
   const { data, isLoading } = useQuery({ queryKey: ['services-pub', catFilter], queryFn: () => serviceApi.list({ category: catFilter || undefined }) });
   const { data: catData } = useQuery({ queryKey: ['service-cats'], queryFn: serviceApi.categories });
 
-  const services = data?.data || [];
+  const services = Array.isArray(data?.data) ? data.data : [];
   const categories = catData?.data || [];
 
   return (

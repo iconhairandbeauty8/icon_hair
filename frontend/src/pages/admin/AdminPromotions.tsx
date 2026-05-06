@@ -11,7 +11,7 @@ export default function AdminPromotions() {
   const [form, setForm] = useState({ title:'', description:'', type:'daily_special', discount_type:'percentage', discount_value:10, code:'', start_date:'', end_date:'', image_url:'' });
 
   const { data } = useQuery({ queryKey:['promotions-admin'], queryFn: promotionApi.list });
-  const promos = data?.data || [];
+  const promos = Array.isArray(data?.data) ? data.data : [];
 
   const create = useMutation({
     mutationFn: promotionApi.create,

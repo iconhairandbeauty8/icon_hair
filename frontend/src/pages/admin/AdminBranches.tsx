@@ -13,7 +13,7 @@ export default function AdminBranches() {
   const [form, setForm] = useState({ name:'', address:'', suburb:'', city:'Auckland', postcode:'', phone:'', email:'', description:'', latitude:'', longitude:'', image_url:'' });
 
   const { data } = useQuery({ queryKey:['branches-admin'], queryFn: branchApi.list });
-  const branches = data?.data || [];
+  const branches = Array.isArray(data?.data) ? data.data : [];
 
   const save = useMutation({
     mutationFn: (d:any) => editTarget ? branchApi.update(editTarget.id, d) : branchApi.create(d),

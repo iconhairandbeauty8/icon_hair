@@ -16,7 +16,7 @@ export default function AdminLoyalty() {
   const [qrUrl, setQrUrl] = useState('');
   const [loadingQr, setLoadingQr] = useState(false);
 
-  const members = data?.data || [];
+  const members = Array.isArray(data?.data) ? data.data : [];
 
   const loadQR = async () => {
     setLoadingQr(true);

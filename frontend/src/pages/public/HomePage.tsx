@@ -52,9 +52,9 @@ export default function HomePage() {
   const { data: services } = useQuery({ queryKey: ['services-home'], queryFn: () => serviceApi.list() });
   const { data: staff } = useQuery({ queryKey: ['staff-home'], queryFn: () => staffApi.list() });
 
-  const featuredServices = services?.data?.slice(0, 3) || [];
-  const featuredStaff = staff?.data?.slice(0, 4) || [];
-  const latestReviews = reviews?.data?.slice(0, 3) || [];
+  const featuredServices = Array.isArray(services?.data) ? services.data.slice(0, 3) : [];
+  const featuredStaff = Array.isArray(staff?.data) ? staff.data.slice(0, 4) : [];
+  const latestReviews = Array.isArray(reviews?.data) ? reviews.data.slice(0, 3) : [];
 
   return (
     <div>

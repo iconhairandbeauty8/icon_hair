@@ -11,7 +11,7 @@ export default function SocialFeedPage() {
   const { isAuthenticated } = useAuthStore();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['social-pub'], queryFn: socialApi.list });
-  const posts = data?.data || [];
+  const posts = Array.isArray(data?.data) ? data.data : [];
 
   const like = useMutation({
     mutationFn: (id: string) => socialApi.like(id),
