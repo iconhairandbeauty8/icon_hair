@@ -46,8 +46,19 @@ const logger = createLogger({
 });
 
 app.use(helmet());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.up.railway.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
   credentials: true,
 }));
 
