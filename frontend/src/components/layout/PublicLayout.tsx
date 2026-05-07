@@ -6,7 +6,6 @@ import { useAuthStore } from '../../store/authStore';
 const navLinks = [
   { label: 'Services', to: '/services' },
   { label: 'Our Team', to: '/team' },
-  { label: 'Branches', to: '/branches' },
   { label: 'Gallery', to: '/gallery' },
   { label: 'Offers', to: '/feed' },
   { label: 'Contact', to: '/contact' },
@@ -14,7 +13,6 @@ const navLinks = [
 
 const footerServices = ['Hair Styling', 'Colour & Highlights', 'Skincare', 'Nails', 'Beauty', 'Wellness'];
 const footerCompany = [
-  { label: 'Our Branches', to: '/branches' },
   { label: 'Our Team', to: '/team' },
   { label: 'Gallery', to: '/gallery' },
   { label: 'Book Online', to: '/book' },

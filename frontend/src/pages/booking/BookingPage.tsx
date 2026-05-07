@@ -7,11 +7,11 @@ import { branchApi, serviceApi, staffApi, bookingApi, voucherApi } from '../../s
 import { useAuthStore } from '../../store/authStore';
 import type { Branch, Service, Employee } from '../../types';
 
-const STEPS = ['Branch', 'Service', 'Stylist', 'Date & Time', 'Confirm'];
+const STEPS = ['Service', 'Stylist', 'Date & Time', 'Confirm'];
 
 export default function BookingPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(0);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -25,16 +25,16 @@ export default function BookingPage() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: branchApi.list, enabled: step === 0 });
+  const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: branchApi.list });
   const { data: servicesRes } = useQuery({
     queryKey: ['services', selectedBranch?.id],
     queryFn: () => serviceApi.list({ branch_id: selectedBranch?.id }),
-    enabled: step === 1 && !!selectedBranch,
+    enabled: step === 0 && !!selectedBranch,
   });
   const { data: staffRes } = useQuery({
     queryKey: ['staff', selectedBranch?.id, selectedService?.id],
     queryFn: () => staffApi.list(selectedBranch?.id),
-    enabled: step === 2 && !!selectedBranch,
+    enabled: step === 1 && !!selectedBranch,
   });
   const { data: slotsRes } = useQuery({
     queryKey: ['slots', selectedBranch?.id, selectedStaff?.id, selectedService?.id, selectedDate],
@@ -44,13 +44,20 @@ export default function BookingPage() {
       service_id: selectedService?.id,
       date: selectedDate,
     }),
-    enabled: step === 3 && !!selectedBranch && !!selectedService && !!selectedDate,
+    enabled: step === 2 && !!selectedBranch && !!selectedService && !!selectedDate,
   });
 
   const branches: Branch[] = Array.isArray(branchesRes?.data) ? branchesRes.data : [];
   const services: Service[] = Array.isArray(servicesRes?.data) ? servicesRes.data : [];
   const staffList: Employee[] = Array.isArray(staffRes?.data) ? staffRes.data : [];
   const slots: string[] = Array.isArray(slotsRes?.data?.slots) ? slotsRes.data.slots : [];
+
+  // Auto-select the first branch silently
+  useEffect(() => {
+    if (branches.length > 0 && !selectedBranch) {
+      setSelectedBranch(branches[0]);
+    }
+  }, [branches]);
 
   const servicesByCategory = services.reduce((acc: Record<string, Service[]>, s) => {
     if (!acc[s.category]) acc[s.category] = [];
@@ -104,10 +111,9 @@ export default function BookingPage() {
   };
 
   const canNext = () => {
-    if (step === 0) return !!selectedBranch;
-    if (step === 1) return !!selectedService;
-    if (step === 2) return !!selectedStaff;
-    if (step === 3) return !!selectedDate && !!selectedSlot;
+    if (step === 0) return !!selectedService;
+    if (step === 1) return !!selectedStaff;
+    if (step === 2) return !!selectedDate && !!selectedSlot;
     return true;
   };
 
@@ -166,49 +172,11 @@ export default function BookingPage() {
             transition={{ duration: 0.25 }}
           >
 
-            {/* ── STEP 0: BRANCH ── */}
+            {/* ── STEP 0: SERVICE ── */}
             {step === 0 && (
               <div>
-                <h2 className="font-display text-2xl font-bold text-onyx-900 mb-2">Choose a Branch</h2>
-                <p className="text-onyx-400 mb-6">Select the location most convenient for you.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {branches.map((branch) => (
-                    <button
-                      key={branch.id}
-                      onClick={() => setSelectedBranch(branch)}
-                      className={`card-luxury p-5 text-left transition-all ${
-                        selectedBranch?.id === branch.id
-                          ? 'border-2 border-gold-500 shadow-gold bg-gold-50'
-                          : 'hover:border-gold-300'
-                      }`}
-                    >
-                      <div className="aspect-video rounded-lg bg-gradient-to-br from-gold-100 to-champagne mb-3 overflow-hidden">
-                        {branch.image_url && (
-                          <img src={branch.image_url} alt={branch.name} className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <h3 className="font-semibold text-onyx-900">{branch.name}</h3>
-                      <p className="text-sm text-onyx-500 mt-1">{branch.suburb}, {branch.city}</p>
-                      {branch.avg_rating && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <span className="star-filled text-xs">★</span>
-                          <span className="text-xs text-onyx-600">{Number(branch.avg_rating).toFixed(1)} rating</span>
-                        </div>
-                      )}
-                      {selectedBranch?.id === branch.id && (
-                        <div className="mt-2 text-gold-600 text-xs font-medium">✓ Selected</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── STEP 1: SERVICE ── */}
-            {step === 1 && (
-              <div>
                 <h2 className="font-display text-2xl font-bold text-onyx-900 mb-2">Select a Service</h2>
-                <p className="text-onyx-400 mb-6">Choose from our premium treatments at {selectedBranch?.name}.</p>
+                <p className="text-onyx-400 mb-6">Choose from our premium treatments.</p>
                 {Object.entries(servicesByCategory).map(([category, catServices]) => (
                   <div key={category} className="mb-6">
                     <h3 className="font-semibold text-gold-600 text-sm uppercase tracking-wide mb-3">{category}</h3>
@@ -251,8 +219,8 @@ export default function BookingPage() {
               </div>
             )}
 
-            {/* ── STEP 2: STAFF ── */}
-            {step === 2 && (
+            {/* ── STEP 1: STAFF ── */}
+            {step === 1 && (
               <div>
                 <h2 className="font-display text-2xl font-bold text-onyx-900 mb-2">Choose Your Stylist</h2>
                 <p className="text-onyx-400 mb-6">Select your preferred stylist, or skip for any available.</p>
@@ -301,8 +269,8 @@ export default function BookingPage() {
               </div>
             )}
 
-            {/* ── STEP 3: DATE & TIME ── */}
-            {step === 3 && (
+            {/* ── STEP 2: DATE & TIME ── */}
+            {step === 2 && (
               <div>
                 <h2 className="font-display text-2xl font-bold text-onyx-900 mb-2">Pick Date & Time</h2>
                 <p className="text-onyx-400 mb-6">Select your preferred appointment time.</p>
@@ -347,8 +315,8 @@ export default function BookingPage() {
               </div>
             )}
 
-            {/* ── STEP 4: CONFIRM ── */}
-            {step === 4 && (
+            {/* ── STEP 3: CONFIRM ── */}
+            {step === 3 && (
               <div>
                 <h2 className="font-display text-2xl font-bold text-onyx-900 mb-2">Confirm Your Booking</h2>
                 <p className="text-onyx-400 mb-6">Review your appointment details and confirm to complete your booking.</p>
@@ -357,7 +325,6 @@ export default function BookingPage() {
                     <h3 className="font-semibold text-onyx-700 text-sm uppercase tracking-wide mb-4">Appointment Summary</h3>
                     <div className="space-y-3">
                       {[
-                        { label: 'Branch', value: selectedBranch?.name },
                         { label: 'Service', value: selectedService?.name },
                         { label: 'Duration', value: `${selectedService?.duration_minutes} minutes` },
                         { label: 'Stylist', value: selectedStaff?.id === 'any' ? 'Any available' : `${selectedStaff?.first_name} ${selectedStaff?.last_name}` },
@@ -463,9 +430,8 @@ export default function BookingPage() {
         </div>
 
         {/* Mini summary bar */}
-        {(selectedBranch || selectedService) && step < 4 && (
+        {selectedService && step < 3 && (
           <div className="mt-4 bg-onyx-50 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-xs text-onyx-600">
-            {selectedBranch && <span>📍 {selectedBranch.name}</span>}
             {selectedService && <span>✂️ {selectedService.name} · NZ${selectedService.price}</span>}
             {selectedStaff && selectedStaff.id !== 'any' && <span>👤 {selectedStaff.first_name}</span>}
             {selectedDate && <span>📅 {selectedDate} {selectedSlot && `@ ${selectedSlot}`}</span>}

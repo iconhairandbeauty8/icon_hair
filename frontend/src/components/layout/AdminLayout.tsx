@@ -8,7 +8,6 @@ const navItems = [
   { icon: '📅', label: 'Bookings', to: '/admin/bookings' },
   { icon: '👥', label: 'Staff', to: '/admin/staff' },
   { icon: '✂️', label: 'Services', to: '/admin/services' },
-  { icon: '🏢', label: 'Branches', to: '/admin/branches' },
   { icon: '📦', label: 'Inventory', to: '/admin/inventory' },
   { icon: '📈', label: 'Reports', to: '/admin/reports' },
   { icon: '🎁', label: 'Promotions', to: '/admin/promotions' },

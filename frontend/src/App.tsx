@@ -5,7 +5,6 @@ import { Toaster } from 'react-hot-toast';
 // Public pages
 import HomePage from './pages/public/HomePage';
 import ServicesPage from './pages/public/ServicesPage';
-import BranchesPage from './pages/public/BranchesPage';
 import StaffPage from './pages/public/StaffPage';
 import GalleryPage from './pages/public/GalleryPage';
 import ContactPage from './pages/public/ContactPage';
@@ -30,7 +29,6 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminStaff from './pages/admin/AdminStaff';
 import AdminServices from './pages/admin/AdminServices';
-import AdminBranches from './pages/admin/AdminBranches';
 import AdminInventory from './pages/admin/AdminInventory';
 import AdminReports from './pages/admin/AdminReports';
 import AdminPromotions from './pages/admin/AdminPromotions';
@@ -71,7 +69,6 @@ export default function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/services" element={<ServicesPage />} />
-            <Route path="/branches" element={<BranchesPage />} />
             <Route path="/team" element={<StaffPage />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/contact" element={<ContactPage />} />
@@ -109,7 +106,6 @@ export default function App() {
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="staff" element={<AdminStaff />} />
             <Route path="services" element={<AdminServices />} />
-            <Route path="branches" element={<AdminBranches />} />
             <Route path="inventory" element={<AdminInventory />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="promotions" element={<AdminPromotions />} />
