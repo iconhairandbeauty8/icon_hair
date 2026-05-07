@@ -60,31 +60,36 @@ export default function ServicesCarousel() {
   const next = () => setActive(i => (i + 1) % total);
 
   return (
-    <section className="relative py-16 sm:py-28 bg-white" style={{ overflowX: 'hidden' }}>
+    <section className="relative py-20 sm:py-32 bg-gray-950" style={{ overflowX: 'hidden' }}>
 
-      {/* Hero image behind deck */}
-      <div className="pointer-events-none absolute inset-0">
-        <img
-          src="/assets/images/hero.png"
-          alt=""
-          className="w-full h-full object-cover object-center opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white" />
-      </div>
+      {/* Blend in from white hero above */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent z-10" />
+
+      {/* Purple radial glow */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_55%,rgba(124,58,237,0.18),transparent)]" />
+
+      {/* Subtle grid texture */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
 
       {/* Section header */}
-      <div className="relative max-w-7xl mx-auto px-4 text-center mb-10 sm:mb-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 text-center mb-12 sm:mb-20">
         <motion.p
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} className="section-label mb-3"
+          viewport={{ once: true }}
+          className="text-purple-400 text-xs font-semibold tracking-widest uppercase mb-3"
         >
           What We Offer
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }} viewport={{ once: true }}
-          className="section-title"
+          className="font-display text-3xl md:text-5xl font-bold text-white"
         >
           Our Services
         </motion.h2>
@@ -92,122 +97,141 @@ export default function ServicesCarousel() {
 
       {/* Card deck */}
       {isLoading ? (
-        <div className="flex items-center justify-center gap-6" style={{ height: 420 }}>
+        <div className="relative z-10 flex items-center justify-center gap-6" style={{ height: 440 }}>
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="rounded-2xl bg-white border border-gray-100 shadow-md skeleton"
-              style={{ width: cardWidth, height: 380, opacity: 1 - i * 0.3, flexShrink: 0 }}
+              className="rounded-3xl bg-white/5 border border-white/10"
+              style={{ width: cardWidth, height: 400, opacity: 1 - i * 0.35, flexShrink: 0 }}
             />
           ))}
         </div>
       ) : services.length === 0 ? null : (
-      <div
-        className="relative mx-auto"
-        style={{ height: visibleRange === 0 ? 400 : 420, perspective: '1400px' }}
-      >
-        {services.map((svc, i) => {
-          let offset = i - active;
-          const half = Math.floor(total / 2);
-          if (offset > half) offset -= total;
-          if (offset < -half) offset += total;
-          const abs = Math.abs(offset);
-          if (abs > visibleRange) return null;
+        <div
+          className="relative z-10 mx-auto"
+          style={{ height: visibleRange === 0 ? 420 : 440, perspective: '1400px' }}
+        >
+          {services.map((svc, i) => {
+            let offset = i - active;
+            const half = Math.floor(total / 2);
+            if (offset > half) offset -= total;
+            if (offset < -half) offset += total;
+            const abs = Math.abs(offset);
+            if (abs > visibleRange) return null;
 
-          const isCenter = offset === 0;
+            const isCenter = offset === 0;
 
-          return (
-            <motion.div
-              key={svc.id}
-              className="absolute top-1/2 left-1/2 cursor-pointer select-none"
-              style={{
-                width: cardWidth,
-                marginLeft: -(cardWidth / 2),
-                marginTop: -190,
-                zIndex: 20 - abs,
-              }}
-              animate={{
-                x: offset * spacing,
-                scale: isCenter ? 1.04 : 1 - abs * 0.08,
-                opacity: isCenter ? 1 : 1 - abs * 0.28,
-                rotateY: offset * -5,
-                filter: abs > 0 ? `blur(${abs * 1.2}px)` : 'blur(0px)',
-              }}
-              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-              onClick={() => !isCenter && setActive(i)}
-              whileHover={isCenter ? { y: -8, transition: { duration: 0.25, ease: 'easeOut' } } : {}}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -50) next();
-                if (info.offset.x > 50) prev();
-              }}
-            >
-              <div
-                className={`h-[380px] rounded-2xl overflow-hidden flex flex-col transition-shadow duration-300 ${
-                  isCenter
-                    ? 'bg-white shadow-2xl shadow-purple-200/70 border border-purple-100 ring-1 ring-purple-50'
-                    : 'bg-white shadow-md border border-gray-100'
-                }`}
+            return (
+              <motion.div
+                key={svc.id}
+                className="absolute top-1/2 left-1/2 cursor-pointer select-none"
+                style={{
+                  width: cardWidth,
+                  marginLeft: -(cardWidth / 2),
+                  marginTop: -200,
+                  zIndex: 20 - abs,
+                }}
+                animate={{
+                  x: offset * spacing,
+                  scale: isCenter ? 1.05 : 1 - abs * 0.09,
+                  opacity: isCenter ? 1 : 1 - abs * 0.32,
+                  rotateY: offset * -6,
+                  filter: abs > 0 ? `blur(${abs * 1.5}px)` : 'blur(0px)',
+                }}
+                transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+                onClick={() => !isCenter && setActive(i)}
+                whileHover={isCenter ? { y: -10, transition: { duration: 0.25, ease: 'easeOut' } } : {}}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -50) next();
+                  if (info.offset.x > 50) prev();
+                }}
               >
-                {/* Service image or icon */}
-                <div className={`h-36 shrink-0 flex items-center justify-center overflow-hidden ${isCenter ? 'bg-purple-50' : 'bg-gray-50'}`}>
-                  {svc.image_url
-                    ? <img src={resolveImageUrl(svc.image_url)} alt={svc.name} className="w-full h-full object-cover" />
-                    : <span className="text-4xl">{CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}</span>
-                  }
-                </div>
-
-                {/* Info */}
-                <div className="p-5 flex flex-col justify-between flex-1">
-                  <div>
+                <div
+                  className={`h-[400px] rounded-3xl overflow-hidden flex flex-col transition-all duration-300 ${
+                    isCenter
+                      ? 'bg-gray-900 border border-purple-500/40 shadow-2xl shadow-purple-500/30 ring-1 ring-purple-400/20'
+                      : 'bg-gray-900/50 border border-white/[0.07]'
+                  }`}
+                >
+                  {/* Image */}
+                  <div className="relative h-48 shrink-0 overflow-hidden">
+                    {svc.image_url
+                      ? <img src={resolveImageUrl(svc.image_url)} alt={svc.name} className="w-full h-full object-cover" />
+                      : (
+                        <div className={`w-full h-full flex items-center justify-center text-5xl ${
+                          isCenter
+                            ? 'bg-gradient-to-br from-purple-900 via-purple-950 to-gray-900'
+                            : 'bg-gray-800/60'
+                        }`}>
+                          {CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}
+                        </div>
+                      )
+                    }
+                    {/* Bottom gradient over image */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
+                    {/* Category pill */}
                     {svc.category && (
-                      <span className={`text-[10px] font-bold tracking-widest uppercase ${isCenter ? 'text-purple-500' : 'text-gray-400'}`}>
+                      <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase text-white/90 bg-purple-600/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-purple-400/30">
                         {svc.category}
                       </span>
                     )}
-                    <h3 className="font-bold text-gray-900 text-base leading-snug mt-0.5 mb-1.5">
-                      {svc.name}
-                    </h3>
-                    <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">
-                      {svc.description}
-                    </p>
+                    {/* Popular badge */}
+                    {isCenter && svc.booking_count > 0 && (
+                      <span className="absolute top-3 right-3 text-[10px] font-bold tracking-wide text-purple-300 bg-purple-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-purple-500/30">
+                        ★ Popular
+                      </span>
+                    )}
                   </div>
 
-                  <div>
-                    <div className={`w-8 h-px my-3 ${isCenter ? 'bg-purple-300' : 'bg-gray-200'}`} />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className={`font-bold text-sm ${isCenter ? 'text-gray-900' : 'text-gray-600'}`}>NZ${svc.price}</div>
-                        <div className="text-gray-400 text-xs">{svc.duration_minutes} min</div>
+                  {/* Info */}
+                  <div className="p-5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className={`font-bold text-base leading-snug mb-1.5 ${isCenter ? 'text-white' : 'text-white/70'}`}>
+                        {svc.name}
+                      </h3>
+                      <p className="text-white/40 text-xs leading-relaxed line-clamp-2">
+                        {svc.description}
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className={`w-full h-px my-3 ${isCenter ? 'bg-purple-500/25' : 'bg-white/[0.07]'}`} />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={`font-bold text-sm ${isCenter ? 'text-white' : 'text-white/60'}`}>
+                            NZ${svc.price}
+                          </div>
+                          <div className="text-white/30 text-xs">{svc.duration_minutes} min</div>
+                        </div>
+                        <Link
+                          to={`/book?service_id=${svc.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 ${
+                            isCenter
+                              ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-600/40'
+                              : 'bg-white/8 text-white/50 border border-white/10 hover:bg-white/15'
+                          }`}
+                        >
+                          Book
+                        </Link>
                       </div>
-                      <Link
-                        to={`/book?service_id=${svc.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                          isCenter
-                            ? 'bg-purple-600 text-white hover:bg-purple-700'
-                            : 'border border-gray-200 text-gray-400 hover:border-purple-400 hover:text-purple-600'
-                        }`}
-                      >
-                        Book
-                      </Link>
                     </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+              </motion.div>
+            );
+          })}
+        </div>
       )}
 
       {/* Navigation */}
-      <div className="relative flex items-center justify-center gap-4 mt-6">
+      <div className="relative z-10 flex items-center justify-center gap-5 mt-8">
         <button
           onClick={prev}
-          className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500
-                     hover:border-purple-400 hover:text-purple-600 transition-all"
+          className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white/60
+                     hover:bg-purple-600 hover:border-purple-600 hover:text-white transition-all duration-200"
         >
           ←
         </button>
@@ -218,24 +242,24 @@ export default function ServicesCarousel() {
               onClick={() => setActive(i)}
               className={`rounded-full transition-all duration-300 ${
                 i === active
-                  ? 'w-6 h-2 bg-purple-600'
-                  : 'w-2 h-2 bg-gray-200 hover:bg-purple-300'
+                  ? 'w-6 h-2 bg-purple-500'
+                  : 'w-2 h-2 bg-white/20 hover:bg-purple-400/60'
               }`}
             />
           ))}
         </div>
         <button
           onClick={next}
-          className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500
-                     hover:border-purple-400 hover:text-purple-600 transition-all"
+          className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white/60
+                     hover:bg-purple-600 hover:border-purple-600 hover:text-white transition-all duration-200"
         >
           →
         </button>
       </div>
 
       {/* View all link */}
-      <div className="relative text-center mt-6">
-        <Link to="/services" className="text-sm text-gray-400 hover:text-purple-600 transition-colors font-medium">
+      <div className="relative z-10 text-center mt-5">
+        <Link to="/services" className="text-sm text-white/30 hover:text-purple-400 transition-colors font-medium">
           View all services →
         </Link>
       </div>
