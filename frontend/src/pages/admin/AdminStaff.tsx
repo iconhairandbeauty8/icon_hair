@@ -15,9 +15,9 @@ export default function AdminStaff() {
   const { data: branchRes } = useQuery({ queryKey:['branches'], queryFn: branchApi.list });
   const { data: servicesRes } = useQuery({ queryKey:['services'], queryFn: () => serviceApi.list() });
 
-  const staff = staffRes?.data || [];
-  const branches = branchRes?.data || [];
-  const services = servicesRes?.data || [];
+  const staff = Array.isArray(staffRes?.data) ? staffRes.data : [];
+  const branches = Array.isArray(branchRes?.data) ? branchRes.data : [];
+  const services = Array.isArray(servicesRes?.data) ? servicesRes.data : [];
 
   const save = useMutation({
     mutationFn: (data: any) => editTarget ? staffApi.update(editTarget.id, data) : staffApi.create(data),

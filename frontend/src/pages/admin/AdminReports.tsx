@@ -44,11 +44,11 @@ export default function AdminReports() {
   const { data: customersData } = useQuery({ queryKey: ['rep-customers'], queryFn: () => reportApi.customerAnalytics() });
   const { data: branchData } = useQuery({ queryKey: ['rep-branches', params], queryFn: () => reportApi.branchComparison(params) });
 
-  const revenue = revenueData?.data || [];
-  const staff = staffData?.data || [];
-  const services = servicesData?.data || [];
-  const customers = customersData?.data?.slice(0, 20) || [];
-  const branches = branchData?.data || [];
+  const revenue = Array.isArray(revenueData?.data) ? revenueData.data : [];
+  const staff = Array.isArray(staffData?.data) ? staffData.data : [];
+  const services = Array.isArray(servicesData?.data) ? servicesData.data : [];
+  const customers = Array.isArray(customersData?.data) ? customersData.data.slice(0, 20) : [];
+  const branches = Array.isArray(branchData?.data) ? branchData.data : [];
 
   const chartRevenue = revenue.map((r: any) => ({
     period: r.period?.slice(0, 10) || '',

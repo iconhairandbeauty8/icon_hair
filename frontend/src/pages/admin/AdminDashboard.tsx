@@ -43,9 +43,9 @@ export default function AdminDashboard() {
   const { data: bookingsData } = useQuery({ queryKey: ['bookings-today'], queryFn: () => bookingApi.list({ date_from: new Date().toISOString().split('T')[0], limit: 10 }) });
 
   const dash = dashData?.data;
-  const revenue = revenueData?.data || [];
-  const services = servicesData?.data?.slice(0, 5) || [];
-  const recentBookings = bookingsData?.data?.bookings || [];
+  const revenue = Array.isArray(revenueData?.data) ? revenueData.data : [];
+  const services = Array.isArray(servicesData?.data) ? servicesData.data.slice(0, 5) : [];
+  const recentBookings = Array.isArray(bookingsData?.data?.bookings) ? bookingsData.data.bookings : [];
 
   const chartData = revenue.map((r: any) => ({
     date: new Date(r.period).toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' }),
