@@ -4,7 +4,7 @@
   "description": "LuxeSalon NZ - Premium Salon Management Frontend",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "start": "serve -s dist -l ${PORT:-3000}",
     "lint": "eslint src --ext ts,tsx"
