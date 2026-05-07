@@ -43,15 +43,6 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
 };
 
-// ===================== BRANCHES =====================
-export const branchApi = {
-  list: () => api.get('/branches'),
-  get: (id: string) => api.get(`/branches/${id}`),
-  create: (data: object) => api.post('/branches', data),
-  update: (id: string, data: object) => api.put(`/branches/${id}`, data),
-  delete: (id: string) => api.delete(`/branches/${id}`),
-};
-
 // ===================== SERVICES =====================
 export const serviceApi = {
   list: (params?: object) => api.get('/services', { params }),
@@ -62,7 +53,7 @@ export const serviceApi = {
 
 // ===================== STAFF =====================
 export const staffApi = {
-  list: (branchId?: string) => api.get('/staff', { params: { branch_id: branchId } }),
+  list: () => api.get('/staff'),
   get: (id: string) => api.get(`/staff/${id}`),
   create: (data: object) => api.post('/staff', data),
   update: (id: string, data: object) => api.put(`/staff/${id}`, data),
@@ -100,8 +91,7 @@ export const reportApi = {
   staffPerformance: (params?: object) => api.get('/reports/staff-performance', { params }),
   servicesAnalysis: (params?: object) => api.get('/reports/services-analysis', { params }),
   customerAnalytics: (params?: object) => api.get('/reports/customer-analytics', { params }),
-  branchComparison: (params?: object) => api.get('/reports/branch-comparison', { params }),
-  dashboardSummary: (branchId?: string) => api.get('/reports/dashboard-summary', { params: { branch_id: branchId } }),
+  dashboardSummary: () => api.get('/reports/dashboard-summary'),
 };
 
 // ===================== PROMOTIONS =====================
@@ -139,7 +129,7 @@ export const voucherApi = {
 
 // ===================== DASHBOARD =====================
 export const dashboardApi = {
-  get: (branchId?: string) => api.get('/dashboard', { params: { branch_id: branchId } }),
+  get: () => api.get('/dashboard'),
 };
 
 // ===================== CUSTOMERS =====================

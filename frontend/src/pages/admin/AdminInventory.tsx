@@ -8,7 +8,7 @@ export default function AdminInventory() {
   const [showForm, setShowForm] = useState(false);
   const [showAdjust, setShowAdjust] = useState<any>(null);
   const [lowStockOnly, setLowStockOnly] = useState(false);
-  const [form, setForm] = useState({ name:'', sku:'', category:'Hair Products', quantity:0, unit:'unit', cost_price:0, retail_price:0, reorder_point:5, branch_id:'' });
+  const [form, setForm] = useState({ name:'', sku:'', category:'Hair Products', quantity:0, unit:'unit', cost_price:0, retail_price:0, reorder_point:5 });
   const [adjustAmount, setAdjustAmount] = useState(0);
   const [adjustReason, setAdjustReason] = useState('');
 

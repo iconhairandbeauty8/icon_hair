@@ -5,7 +5,6 @@ import { authenticate, authorize } from '../middleware/auth';
 const router = express.Router();
 
 router.get('/revenue', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   const period = (req.query.period as string) ?? 'monthly';
   const date_from = req.query.date_from as string | undefined;
   const date_to = req.query.date_to as string | undefined;
@@ -23,7 +22,6 @@ router.get('/revenue', authenticate, authorize('admin', 'manager'), async (req: 
     const conditions: string[] = ["b.status = 'completed'"];
     let idx = 1;
 
-    if (branch_id) { conditions.push(`b.branch_id = $${idx++}`); params.push(branch_id); }
     if (date_from) { conditions.push(`b.start_time >= $${idx++}`); params.push(date_from); }
     if (date_to)   { conditions.push(`b.start_time <= $${idx++}`); params.push(date_to + ' 23:59:59'); }
 
@@ -48,7 +46,6 @@ router.get('/revenue', authenticate, authorize('admin', 'manager'), async (req: 
 });
 
 router.get('/staff-performance', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   const date_from = req.query.date_from as string | undefined;
   const date_to = req.query.date_to as string | undefined;
 
@@ -57,7 +54,6 @@ router.get('/staff-performance', authenticate, authorize('admin', 'manager'), as
     const conditions: string[] = ["b.status = 'completed'"];
     let idx = 1;
 
-    if (branch_id) { conditions.push(`b.branch_id = $${idx++}`); params.push(branch_id); }
     if (date_from) { conditions.push(`b.start_time >= $${idx++}`); params.push(date_from); }
     if (date_to)   { conditions.push(`b.start_time <= $${idx++}`); params.push(date_to); }
 
@@ -78,7 +74,6 @@ router.get('/staff-performance', authenticate, authorize('admin', 'manager'), as
       LEFT JOIN bookings b ON b.employee_id = e.id AND ${conditions.join(' AND ')}
       LEFT JOIN services s ON b.service_id = s.id
       LEFT JOIN reviews r ON r.employee_id = e.id
-      ${branch_id ? 'WHERE e.branch_id = $1' : ''}
       GROUP BY e.id
       ORDER BY total_revenue DESC NULLS LAST
     `, params);
@@ -90,7 +85,6 @@ router.get('/staff-performance', authenticate, authorize('admin', 'manager'), as
 });
 
 router.get('/services-analysis', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   const date_from = req.query.date_from as string | undefined;
   const date_to = req.query.date_to as string | undefined;
 
@@ -105,7 +99,6 @@ router.get('/services-analysis', authenticate, authorize('admin', 'manager'), as
       LEFT JOIN bookings b ON b.service_id = s.id AND b.status = 'completed'
         ${date_from ? `AND b.start_time >= '${date_from}'` : ''}
         ${date_to ? `AND b.start_time <= '${date_to}'` : ''}
-        ${branch_id ? `AND b.branch_id = '${branch_id}'` : ''}
       LEFT JOIN reviews r ON r.service_id = s.id
       GROUP BY s.id
       ORDER BY booking_count DESC
@@ -117,8 +110,6 @@ router.get('/services-analysis', authenticate, authorize('admin', 'manager'), as
 });
 
 router.get('/customer-analytics', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
-
   try {
     const result = await db.query(`
       SELECT
@@ -136,7 +127,6 @@ router.get('/customer-analytics', authenticate, authorize('admin', 'manager'), a
       LEFT JOIN loyalty_profiles lp ON lp.customer_id = u.id
       LEFT JOIN loyalty_points pts ON pts.customer_id = u.id
       WHERE u.role_id = (SELECT id FROM roles WHERE name = 'customer')
-      ${branch_id ? `AND b.branch_id = '${branch_id}'` : ''}
       GROUP BY u.id, lp.membership_tier
       ORDER BY total_spent DESC
     `);
@@ -146,48 +136,16 @@ router.get('/customer-analytics', authenticate, authorize('admin', 'manager'), a
   }
 });
 
-router.get('/branch-comparison', authenticate, authorize('admin'), async (req: Request, res: Response) => {
-  const date_from = req.query.date_from as string | undefined;
-  const date_to = req.query.date_to as string | undefined;
-
-  try {
-    const result = await db.query(`
-      SELECT
-        br.id, br.name, br.city,
-        COUNT(DISTINCT b.id) as total_bookings,
-        SUM(CASE WHEN b.status = 'completed' THEN b.price ELSE 0 END) as total_revenue,
-        COUNT(DISTINCT b.customer_id) as unique_customers,
-        COUNT(DISTINCT e.id) as staff_count,
-        AVG(r.rating) as avg_rating,
-        COUNT(CASE WHEN b.status = 'no_show' THEN 1 END) as no_shows
-      FROM branches br
-      LEFT JOIN bookings b ON b.branch_id = br.id
-        ${date_from ? `AND b.start_time >= '${date_from}'` : ''}
-        ${date_to ? `AND b.start_time <= '${date_to}'` : ''}
-      LEFT JOIN employees e ON e.branch_id = br.id AND e.is_active = true
-      LEFT JOIN reviews r ON r.branch_id = br.id
-      WHERE br.is_active = true
-      GROUP BY br.id
-      ORDER BY total_revenue DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message });
-  }
-});
-
 router.get('/dashboard-summary', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   const today = new Date().toISOString().split('T')[0];
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-  const branchCondition = branch_id ? `AND branch_id = '${branch_id}'` : '';
 
   try {
     const [todayStats, monthStats, pendingBookings, lowStockItems] = await Promise.all([
-      db.query(`SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue FROM bookings WHERE DATE(start_time) = $1 AND status = 'completed' ${branchCondition}`, [today]),
-      db.query(`SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue FROM bookings WHERE start_time >= $1 AND status = 'completed' ${branchCondition}`, [monthStart]),
-      db.query(`SELECT COUNT(*) as count FROM bookings WHERE status = 'pending' ${branchCondition}`),
-      db.query(`SELECT COUNT(*) as count FROM inventory_items WHERE quantity <= reorder_point ${branch_id ? `AND branch_id = '${branch_id}'` : ''}`),
+      db.query(`SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue FROM bookings WHERE DATE(start_time) = $1 AND status = 'completed'`, [today]),
+      db.query(`SELECT COUNT(*) as bookings, COALESCE(SUM(price), 0) as revenue FROM bookings WHERE start_time >= $1 AND status = 'completed'`, [monthStart]),
+      db.query(`SELECT COUNT(*) as count FROM bookings WHERE status = 'pending'`),
+      db.query(`SELECT COUNT(*) as count FROM inventory_items WHERE quantity <= reorder_point`),
     ]);
 
     res.json({

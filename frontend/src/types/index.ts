@@ -16,29 +16,6 @@ export interface User {
   created_at: string;
 }
 
-export interface Branch {
-  id: string;
-  name: string;
-  slug: string;
-  address: string;
-  suburb: string;
-  city: string;
-  postcode: string;
-  phone: string;
-  email: string;
-  description: string;
-  latitude: number;
-  longitude: number;
-  opening_hours: Record<string, { open: string; close: string; closed: boolean }>;
-  image_url: string;
-  gallery: string[];
-  amenities: string[];
-  is_active: boolean;
-  staff_count?: number;
-  service_count?: number;
-  avg_rating?: number;
-}
-
 export interface Service {
   id: string;
   name: string;
@@ -55,7 +32,6 @@ export interface Service {
 
 export interface Employee {
   id: string;
-  branch_id: string;
   first_name: string;
   last_name: string;
   email?: string;
@@ -78,7 +54,6 @@ export interface Booking {
   id: string;
   reference: string;
   customer_id: string;
-  branch_id: string;
   employee_id: string;
   service_id: string;
   start_time: string;
@@ -94,7 +69,6 @@ export interface Booking {
   staff_image?: string;
   service_name?: string;
   duration_minutes?: number;
-  branch_name?: string;
   payment_status?: string;
 }
 
@@ -121,7 +95,6 @@ export interface InventoryItem {
   reorder_point: number;
   supplier_id?: string;
   supplier_name?: string;
-  branch_id: string;
   image_url?: string;
   is_active: boolean;
 }
@@ -149,7 +122,6 @@ export interface Review {
   staff_name?: string;
   service_id?: string;
   service_name?: string;
-  branch_id?: string;
   rating: number;
   comment: string;
   created_at: string;

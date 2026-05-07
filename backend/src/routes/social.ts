@@ -26,15 +26,15 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 router.post('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const { title, content, image_urls, type, branch_id, linked_service_id } = req.body as {
+  const { title, content, image_urls, type, linked_service_id } = req.body as {
     title: string; content: string; image_urls: string[];
-    type: string; branch_id: string; linked_service_id: string;
+    type: string; linked_service_id: string;
   };
   try {
     const result = await db.query(`
-      INSERT INTO social_posts (author_id, title, content, image_urls, type, branch_id, linked_service_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
-    `, [req.user!.id, title, content, JSON.stringify(image_urls || []), type, branch_id, linked_service_id]);
+      INSERT INTO social_posts (author_id, title, content, image_urls, type, linked_service_id)
+      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
+    `, [req.user!.id, title, content, JSON.stringify(image_urls || []), type, linked_service_id]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

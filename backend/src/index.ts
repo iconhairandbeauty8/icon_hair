@@ -6,7 +6,6 @@ import rateLimit from 'express-rate-limit';
 import { createLogger, transports, format } from 'winston';
 
 import authRoutes from './routes/auth';
-import branchRoutes from './routes/branches';
 import staffRoutes from './routes/staff';
 import serviceRoutes from './routes/services';
 import bookingRoutes from './routes/bookings';
@@ -79,7 +78,6 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/branches', branchRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);

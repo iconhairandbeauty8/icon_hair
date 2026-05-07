@@ -50,7 +50,7 @@ function StripeCheckout({ booking }: { booking: any }) {
 export function BookingConfirmPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { booking, service, staff, branch } = location.state || {};
+  const { booking, service, staff } = location.state || {};
   const [clientSecret, setClientSecret] = useState('');
   const [stripeReady, setStripeReady] = useState(false);
   const [payMode, setPayMode] = useState<'venue' | 'online'>('venue');
@@ -81,7 +81,6 @@ export function BookingConfirmPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-onyx-500">Service</span><span className="font-medium">{service?.name}</span></div>
             <div className="flex justify-between"><span className="text-onyx-500">Stylist</span><span className="font-medium">{staff?.id === 'any' ? 'Assigned on arrival' : `${staff?.first_name} ${staff?.last_name}`}</span></div>
-            <div className="flex justify-between"><span className="text-onyx-500">Branch</span><span className="font-medium">{branch?.name}</span></div>
             <div className="flex justify-between"><span className="text-onyx-500">Date & Time</span><span className="font-medium">{new Date(booking.start_time).toLocaleString('en-NZ')}</span></div>
             <div className="border-t border-gray-100 pt-2 flex justify-between font-bold">
               <span>Total</span>

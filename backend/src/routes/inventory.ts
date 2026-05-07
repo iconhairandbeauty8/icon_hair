@@ -8,10 +8,9 @@ const router = express.Router();
 router.get('/alerts', authenticate, authorize('admin', 'manager'), async (_req: Request, res: Response) => {
   try {
     const result = await db.query(`
-      SELECT i.*, s.name as supplier_name, s.contact_email, b.name as branch_name
+      SELECT i.*, s.name as supplier_name, s.contact_email
       FROM inventory_items i
       LEFT JOIN suppliers s ON i.supplier_id = s.id
-      LEFT JOIN branches b ON i.branch_id = b.id
       WHERE i.quantity <= i.reorder_point
       ORDER BY (i.quantity::float / NULLIF(i.reorder_point, 0)) ASC
     `);
@@ -44,12 +43,10 @@ router.get('/transactions', authenticate, authorize('admin', 'manager'), async (
 });
 
 router.get('/', authenticate, authorize('admin', 'manager', 'staff'), async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   const low_stock = req.query.low_stock as string | undefined;
   try {
     const conditions: string[] = [];
     const params: unknown[] = [];
-    if (branch_id) { conditions.push(`i.branch_id = $${params.length + 1}`); params.push(branch_id); }
     if (low_stock === 'true') { conditions.push('i.quantity <= i.reorder_point'); }
 
     const result = await db.query(`
@@ -66,12 +63,12 @@ router.get('/', authenticate, authorize('admin', 'manager', 'staff'), async (req
 });
 
 router.post('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const { name, sku, category, quantity, unit, cost_price, retail_price, reorder_point, supplier_id, branch_id, image_url } = req.body;
+  const { name, sku, category, quantity, unit, cost_price, retail_price, reorder_point, supplier_id, image_url } = req.body;
   try {
     const result = await db.query(`
-      INSERT INTO inventory_items (name, sku, category, quantity, unit, cost_price, retail_price, reorder_point, supplier_id, branch_id, image_url)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *
-    `, [name, sku, category, quantity, unit, cost_price, retail_price, reorder_point, supplier_id, branch_id, image_url]);
+      INSERT INTO inventory_items (name, sku, category, quantity, unit, cost_price, retail_price, reorder_point, supplier_id, image_url)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *
+    `, [name, sku, category, quantity, unit, cost_price, retail_price, reorder_point, supplier_id, image_url]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

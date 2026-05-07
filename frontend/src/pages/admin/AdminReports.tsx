@@ -34,7 +34,7 @@ export default function AdminReports() {
     new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
   );
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
-  const [tab, setTab] = useState<'revenue' | 'staff' | 'services' | 'customers' | 'branches'>('revenue');
+  const [tab, setTab] = useState<'revenue' | 'staff' | 'services' | 'customers'>('revenue');
 
   const params = { period, date_from: dateFrom, date_to: dateTo };
 
@@ -42,13 +42,11 @@ export default function AdminReports() {
   const { data: staffData } = useQuery({ queryKey: ['rep-staff', params], queryFn: () => reportApi.staffPerformance(params) });
   const { data: servicesData } = useQuery({ queryKey: ['rep-services', params], queryFn: () => reportApi.servicesAnalysis(params) });
   const { data: customersData } = useQuery({ queryKey: ['rep-customers'], queryFn: () => reportApi.customerAnalytics() });
-  const { data: branchData } = useQuery({ queryKey: ['rep-branches', params], queryFn: () => reportApi.branchComparison(params) });
 
   const revenue = Array.isArray(revenueData?.data) ? revenueData.data : [];
   const staff = Array.isArray(staffData?.data) ? staffData.data : [];
   const services = Array.isArray(servicesData?.data) ? servicesData.data : [];
   const customers = Array.isArray(customersData?.data) ? customersData.data.slice(0, 20) : [];
-  const branches = Array.isArray(branchData?.data) ? branchData.data : [];
 
   const chartRevenue = revenue.map((r: any) => ({
     period: r.period?.slice(0, 10) || '',
@@ -62,7 +60,6 @@ export default function AdminReports() {
     { id: 'staff', label: '👤 Staff Performance' },
     { id: 'services', label: '✂️ Services' },
     { id: 'customers', label: '👥 Customers' },
-    { id: 'branches', label: '🏢 Branches' },
   ];
 
   return (
@@ -273,43 +270,6 @@ export default function AdminReports() {
             </div>
           )}
 
-          {/* BRANCHES TAB */}
-          {tab === 'branches' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-display font-semibold text-onyx-900">Branch Comparison</h3>
-                <ExportButton data={branches} filename="branch-comparison" />
-              </div>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={branches.map((b: any) => ({ name: b.name?.split(' ')[0], Revenue: Number(b.total_revenue || 0), Bookings: Number(b.total_bookings || 0) }))}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Revenue" fill={GOLD} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Bookings" fill={BLUE} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {branches.map((b: any) => (
-                  <div key={b.id} className="bg-gray-50 rounded-xl p-4">
-                    <div className="font-semibold text-onyx-900 mb-1">{b.name}</div>
-                    <div className="text-xs text-onyx-400 mb-3">{b.city}</div>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex justify-between"><span className="text-onyx-500">Revenue</span><span className="font-semibold text-gold-600">NZ${Number(b.total_revenue || 0).toFixed(0)}</span></div>
-                      <div className="flex justify-between"><span className="text-onyx-500">Bookings</span><span className="font-medium">{b.total_bookings || 0}</span></div>
-                      <div className="flex justify-between"><span className="text-onyx-500">Customers</span><span className="font-medium">{b.unique_customers || 0}</span></div>
-                      <div className="flex justify-between"><span className="text-onyx-500">Staff</span><span className="font-medium">{b.staff_count || 0}</span></div>
-                      <div className="flex justify-between"><span className="text-onyx-500">Rating</span>
-                        <span className="font-medium text-gold-500">{'★'.repeat(Math.round(b.avg_rating || 0))} {Number(b.avg_rating || 0).toFixed(1)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

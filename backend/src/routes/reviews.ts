@@ -5,13 +5,11 @@ import { authenticate } from '../middleware/auth';
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   const employee_id = req.query.employee_id as string | undefined;
   const limit = req.query.limit ?? 20;
   try {
     const conditions: string[] = ['r.is_visible = true'];
     const params: unknown[] = [];
-    if (branch_id) { conditions.push(`r.branch_id = $${params.length + 1}`); params.push(branch_id); }
     if (employee_id) { conditions.push(`r.employee_id = $${params.length + 1}`); params.push(employee_id); }
     params.push(limit);
     const result = await db.query(`
@@ -31,13 +29,12 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 router.post('/', authenticate, async (req: Request, res: Response) => {
-  const { booking_id, rating, comment, employee_id, service_id, branch_id } = req.body as {
+  const { booking_id, rating, comment, employee_id, service_id } = req.body as {
     booking_id: string;
     rating: number;
     comment: string;
     employee_id: string;
     service_id: string;
-    branch_id: string;
   };
   try {
     const existing = await db.query('SELECT id FROM reviews WHERE booking_id = $1', [booking_id]);
@@ -46,9 +43,9 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       return;
     }
     const result = await db.query(`
-      INSERT INTO reviews (booking_id, customer_id, employee_id, service_id, branch_id, rating, comment)
-      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
-    `, [booking_id, req.user!.id, employee_id, service_id, branch_id, rating, comment]);
+      INSERT INTO reviews (booking_id, customer_id, employee_id, service_id, rating, comment)
+      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
+    `, [booking_id, req.user!.id, employee_id, service_id, rating, comment]);
 
     await db.query(`
       UPDATE employees SET avg_rating = (

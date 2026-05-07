@@ -79,7 +79,6 @@ export default function AdminBookings() {
                       { label: 'Customer', cls: '' },
                       { label: 'Service', cls: 'hidden sm:table-cell' },
                       { label: 'Stylist', cls: 'hidden md:table-cell' },
-                      { label: 'Branch', cls: 'hidden lg:table-cell' },
                       { label: 'Date & Time', cls: 'hidden sm:table-cell' },
                       { label: 'Price', cls: 'hidden md:table-cell' },
                       { label: 'Status', cls: '' },
@@ -107,7 +106,6 @@ export default function AdminBookings() {
                           <span className="text-onyx-700">{b.staff_name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-onyx-500 text-xs hidden lg:table-cell">{b.branch_name}</td>
                       <td className="px-4 py-3 text-onyx-700 text-xs hidden sm:table-cell">
                         {new Date(b.start_time).toLocaleDateString('en-NZ')}<br />
                         {new Date(b.start_time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })}

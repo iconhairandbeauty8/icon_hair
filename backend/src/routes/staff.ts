@@ -6,7 +6,6 @@ import { PoolClient } from 'pg';
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
-  const branch_id = req.query.branch_id as string | undefined;
   try {
     const result = await db.query(`
       SELECT e.*,
@@ -20,10 +19,10 @@ router.get('/', async (req: Request, res: Response) => {
       LEFT JOIN services s ON es.service_id = s.id
       LEFT JOIN reviews r ON r.employee_id = e.id
       LEFT JOIN bookings b ON b.employee_id = e.id AND b.status = 'completed'
-      WHERE e.is_active = true ${branch_id ? 'AND e.branch_id = $1' : ''}
+      WHERE e.is_active = true
       GROUP BY e.id
       ORDER BY e.first_name
-    `, branch_id ? [branch_id] : []);
+    `);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -31,18 +30,18 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 router.post('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const { first_name, last_name, email, phone, role, branch_id, bio, image_url, experience_years, service_ids, schedule } = req.body as {
+  const { first_name, last_name, email, phone, role, bio, image_url, experience_years, service_ids, schedule } = req.body as {
     first_name: string; last_name: string; email?: string; phone?: string;
-    role: string; branch_id: string; bio?: string; image_url?: string;
+    role: string; bio?: string; image_url?: string;
     experience_years?: number; service_ids?: string[]; schedule?: object;
   };
   const client: PoolClient = await db.getClient();
   try {
     await client.query('BEGIN');
     const result = await client.query(`
-      INSERT INTO employees (first_name, last_name, email, phone, role, branch_id, bio, image_url, experience_years, schedule)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *
-    `, [first_name, last_name, email || null, phone || null, role, branch_id, bio || null, image_url || null, experience_years || 0, JSON.stringify(schedule || {})]);
+      INSERT INTO employees (first_name, last_name, email, phone, role, bio, image_url, experience_years, schedule)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
+    `, [first_name, last_name, email || null, phone || null, role, bio || null, image_url || null, experience_years || 0, JSON.stringify(schedule || {})]);
 
     const employee = result.rows[0];
     if (service_ids?.length) {

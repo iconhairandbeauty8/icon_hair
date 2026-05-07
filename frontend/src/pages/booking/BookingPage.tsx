@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { branchApi, serviceApi, staffApi, bookingApi, voucherApi, resolveImageUrl } from '../../services/api';
+import { serviceApi, staffApi, bookingApi, voucherApi, resolveImageUrl } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import type { Branch, Service, Employee } from '../../types';
+import type { Service, Employee } from '../../types';
 
 const STEPS = ['Service', 'Stylist', 'Date & Time', 'Confirm'];
 
@@ -13,7 +13,6 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(0);
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<Employee | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
@@ -25,39 +24,29 @@ export default function BookingPage() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: branchApi.list });
   const { data: servicesRes } = useQuery({
     queryKey: ['services'],
     queryFn: () => serviceApi.list(),
     enabled: step === 0,
   });
   const { data: staffRes } = useQuery({
-    queryKey: ['staff', selectedBranch?.id, selectedService?.id],
-    queryFn: () => staffApi.list(selectedBranch?.id),
-    enabled: step === 1 && !!selectedBranch,
+    queryKey: ['staff', selectedService?.id],
+    queryFn: () => staffApi.list(),
+    enabled: step === 1,
   });
   const { data: slotsRes } = useQuery({
-    queryKey: ['slots', selectedBranch?.id, selectedStaff?.id, selectedService?.id, selectedDate],
+    queryKey: ['slots', selectedStaff?.id, selectedService?.id, selectedDate],
     queryFn: () => bookingApi.availability({
-      branch_id: selectedBranch?.id,
       employee_id: selectedStaff?.id,
       service_id: selectedService?.id,
       date: selectedDate,
     }),
-    enabled: step === 2 && !!selectedBranch && !!selectedService && !!selectedDate,
+    enabled: step === 2 && !!selectedService && !!selectedDate,
   });
 
-  const branches: Branch[] = Array.isArray(branchesRes?.data) ? branchesRes.data : [];
   const services: Service[] = Array.isArray(servicesRes?.data) ? servicesRes.data : [];
   const staffList: Employee[] = Array.isArray(staffRes?.data) ? staffRes.data : [];
   const slots: string[] = Array.isArray(slotsRes?.data?.slots) ? slotsRes.data.slots : [];
-
-  // Auto-select the first branch silently
-  useEffect(() => {
-    if (branches.length > 0 && !selectedBranch) {
-      setSelectedBranch(branches[0]);
-    }
-  }, [branches]);
 
   const servicesByCategory = services.reduce((acc: Record<string, Service[]>, s) => {
     if (!acc[s.category]) acc[s.category] = [];
@@ -86,7 +75,7 @@ export default function BookingPage() {
       navigate('/login?redirect=/book');
       return;
     }
-    if (!selectedBranch || !selectedService || !selectedStaff || !selectedDate || !selectedSlot) {
+    if (!selectedService || !selectedStaff || !selectedDate || !selectedSlot) {
       toast.error('Please complete all steps');
       return;
     }
@@ -95,7 +84,6 @@ export default function BookingPage() {
     try {
       const startTime = `${selectedDate}T${selectedSlot}:00`;
       const res = await bookingApi.create({
-        branch_id: selectedBranch.id,
         service_id: selectedService.id,
         employee_id: selectedStaff.id === 'any' ? null : selectedStaff.id,
         start_time: startTime,

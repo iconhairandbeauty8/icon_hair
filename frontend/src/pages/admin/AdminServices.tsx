@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { serviceApi, branchApi, resolveImageUrl } from '../../services/api';
+import { serviceApi, resolveImageUrl } from '../../services/api';
 import ImageUpload from '../../components/ui/ImageUpload';
 
 const CATEGORIES = ['Hair','Hair Colour','Hair Treatment','Skincare','Nails','Beauty','Wellness','Barbering'];
@@ -11,12 +11,10 @@ export default function AdminServices() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [form, setForm] = useState({ name:'', category:'Hair', description:'', price:0, duration_minutes:60, image_url:'', branch_ids:[] as string[] });
+  const [form, setForm] = useState({ name:'', category:'Hair', description:'', price:0, duration_minutes:60, image_url:'' });
   const [catFilter, setCatFilter] = useState('');
 
   const { data, isLoading } = useQuery({ queryKey:['admin-services'], queryFn:() => serviceApi.list() });
-  const { data: branchRes } = useQuery({ queryKey:['branches'], queryFn: branchApi.list });
-  const branches = Array.isArray(branchRes?.data) ? branchRes.data : [];
   const services = (Array.isArray(data?.data) ? data.data : []).filter((s:any) => !catFilter || s.category === catFilter);
 
   const save = useMutation({
@@ -24,8 +22,8 @@ export default function AdminServices() {
     onSuccess: () => { qc.invalidateQueries({ queryKey:['admin-services'] }); setShowForm(false); toast.success('Saved!'); },
   });
 
-  const openNew = () => { setEditTarget(null); setForm({ name:'', category:'Hair', description:'', price:0, duration_minutes:60, image_url:'', branch_ids:[] }); setShowForm(true); };
-  const openEdit = (s:any) => { setEditTarget(s); setForm({ ...s, branch_ids: s.branch_ids || [] }); setShowForm(true); };
+  const openNew = () => { setEditTarget(null); setForm({ name:'', category:'Hair', description:'', price:0, duration_minutes:60, image_url:'' }); setShowForm(true); };
+  const openEdit = (s:any) => { setEditTarget(s); setForm({ ...s }); setShowForm(true); };
 
   return (
     <div className="space-y-5">
@@ -106,22 +104,6 @@ export default function AdminServices() {
                 label="Service Image"
                 aspectRatio="video"
               />
-              <div>
-                <label className="block text-xs font-medium text-onyx-600 mb-1">Available at Branches</label>
-                <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                  {branches.map((b:any) => (
-                    <label key={b.id} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={form.branch_ids.includes(b.id)}
-                        onChange={e => setForm(f => ({ ...f, branch_ids: e.target.checked ? [...f.branch_ids, b.id] : f.branch_ids.filter(id => id !== b.id) }))}
-                        className="accent-gold-500"
-                      />
-                      <span className="text-sm text-onyx-700">{b.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={()=>setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm">Cancel</button>
                 <button onClick={()=>save.mutate(form)} disabled={save.isPending} className="flex-1 btn-gold py-2.5 text-sm disabled:opacity-60">{save.isPending?'Saving...':'Save'}</button>

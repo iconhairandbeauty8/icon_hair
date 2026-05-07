@@ -24,41 +24,6 @@ export interface AuthenticatedUser {
   updated_at: Date;
 }
 
-// ─── Branch ───────────────────────────────────────────────────────────────────
-export interface DayHours {
-  open: string;
-  close: string;
-  closed: boolean;
-}
-
-export interface OpeningHours {
-  monday?: DayHours;
-  tuesday?: DayHours;
-  wednesday?: DayHours;
-  thursday?: DayHours;
-  friday?: DayHours;
-  saturday?: DayHours;
-  sunday?: DayHours;
-}
-
-export interface Branch {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  suburb: string | null;
-  phone: string | null;
-  email: string | null;
-  description: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  opening_hours: OpeningHours;
-  image_url: string | null;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
 // ─── Employee ─────────────────────────────────────────────────────────────────
 export interface Employee {
   id: string;
@@ -67,7 +32,6 @@ export interface Employee {
   email: string | null;
   phone: string | null;
   role: string;
-  branch_id: string;
   bio: string | null;
   image_url: string | null;
   experience_years: number;
@@ -98,7 +62,6 @@ export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' 
 export interface Booking {
   id: string;
   customer_id: string;
-  branch_id: string;
   employee_id: string;
   service_id: string;
   start_time: Date;
@@ -141,7 +104,6 @@ export interface InventoryItem {
   retail_price: number | null;
   reorder_point: number;
   supplier_id: string | null;
-  branch_id: string;
   image_url: string | null;
   created_at: Date;
   updated_at: Date;
@@ -154,7 +116,6 @@ export interface Review {
   customer_id: string;
   employee_id: string | null;
   service_id: string | null;
-  branch_id: string;
   rating: number;
   comment: string | null;
   is_visible: boolean;
@@ -188,7 +149,6 @@ export interface Promotion {
   end_date: Date | null;
   code: string | null;
   image_url: string | null;
-  branch_id: string | null;
   applicable_services: string[];
   is_active: boolean;
   created_at: Date;

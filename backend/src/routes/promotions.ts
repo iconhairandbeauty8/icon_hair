@@ -17,16 +17,16 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 router.post('/', authenticate, authorize('admin', 'manager'), async (req: Request, res: Response) => {
-  const { title, description, type, discount_type, discount_value, start_date, end_date, code, image_url, branch_id, applicable_services } = req.body as {
+  const { title, description, type, discount_type, discount_value, start_date, end_date, code, image_url, applicable_services } = req.body as {
     title: string; description: string; type: string; discount_type: string;
     discount_value: number; start_date: string; end_date: string; code: string;
-    image_url: string; branch_id: string; applicable_services: string[];
+    image_url: string; applicable_services: string[];
   };
   try {
     const result = await db.query(`
-      INSERT INTO promotions (title, description, type, discount_type, discount_value, start_date, end_date, code, image_url, branch_id, applicable_services)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *
-    `, [title, description, type, discount_type, discount_value, start_date, end_date, code, image_url, branch_id, JSON.stringify(applicable_services)]);
+      INSERT INTO promotions (title, description, type, discount_type, discount_value, start_date, end_date, code, image_url, applicable_services)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *
+    `, [title, description, type, discount_type, discount_value, start_date, end_date, code, image_url, JSON.stringify(applicable_services)]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

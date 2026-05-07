@@ -67,7 +67,7 @@ export function CustomerDashboard() {
                     <div key={b.id} className="flex items-center justify-between p-3 bg-gold-50 rounded-xl">
                       <div>
                         <div className="font-medium text-onyx-900 text-sm">{b.service_name}</div>
-                        <div className="text-xs text-onyx-500 mt-0.5">with {b.staff_name} · {b.branch_name}</div>
+                        <div className="text-xs text-onyx-500 mt-0.5">with {b.staff_name}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-semibold text-onyx-900">{new Date(b.start_time).toLocaleDateString('en-NZ')}</div>

@@ -410,10 +410,6 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link to="/book" className="btn-primary px-10 py-3.5 text-base">Book Now</Link>
-              <Link to="/branches"
-                className="inline-flex items-center justify-center gap-2 px-10 py-3.5 rounded-xl border-2 border-white/20 text-white font-semibold text-base hover:border-white/40 transition-colors">
-                Find a Branch
-              </Link>
             </div>
           </motion.div>
         </div>

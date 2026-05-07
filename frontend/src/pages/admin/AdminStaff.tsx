@@ -2,21 +2,19 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { staffApi, branchApi, serviceApi, resolveImageUrl } from '../../services/api';
+import { staffApi, serviceApi, resolveImageUrl } from '../../services/api';
 import ImageUpload from '../../components/ui/ImageUpload';
 
 export default function AdminStaff() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [form, setForm] = useState({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', branch_id:'', bio:'', image_url:'', experience_years:0, service_ids:[] as string[] });
+  const [form, setForm] = useState({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', bio:'', image_url:'', experience_years:0, service_ids:[] as string[] });
 
   const { data: staffRes, isLoading } = useQuery({ queryKey:['admin-staff'], queryFn: () => staffApi.list() });
-  const { data: branchRes } = useQuery({ queryKey:['branches'], queryFn: branchApi.list });
   const { data: servicesRes } = useQuery({ queryKey:['services'], queryFn: () => serviceApi.list() });
 
   const staff = Array.isArray(staffRes?.data) ? staffRes.data : [];
-  const branches = Array.isArray(branchRes?.data) ? branchRes.data : [];
   const services = Array.isArray(servicesRes?.data) ? servicesRes.data : [];
 
   const save = useMutation({
@@ -26,7 +24,7 @@ export default function AdminStaff() {
   });
 
   const openEdit = (member: any) => { setEditTarget(member); setForm({ ...member, service_ids: member.service_ids || [] }); setShowForm(true); };
-  const openNew = () => { setEditTarget(null); setForm({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', branch_id:'', bio:'', image_url:'', experience_years:0, service_ids:[] }); setShowForm(true); };
+  const openNew = () => { setEditTarget(null); setForm({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', bio:'', image_url:'', experience_years:0, service_ids:[] }); setShowForm(true); };
 
   const ROLES = ['Hairdresser','Barber','Colourist','Beautician','Nail Technician','Massage Therapist','Skincare Specialist','Lash Artist','Brow Specialist'];
 
@@ -89,11 +87,6 @@ export default function AdminStaff() {
               <div><label className="block text-xs font-medium text-onyx-600 mb-1">Role</label>
                 <select value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))} className="input-luxury text-sm py-2">
                   {ROLES.map(r=><option key={r}>{r}</option>)}
-                </select></div>
-              <div><label className="block text-xs font-medium text-onyx-600 mb-1">Branch</label>
-                <select value={form.branch_id} onChange={e=>setForm(f=>({...f,branch_id:e.target.value}))} className="input-luxury text-sm py-2">
-                  <option value="">Select branch</option>
-                  {branches.map((b:any)=><option key={b.id} value={b.id}>{b.name}</option>)}
                 </select></div>
               <div><label className="block text-xs font-medium text-onyx-600 mb-1">Email</label>
                 <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} className="input-luxury text-sm py-2" /></div>

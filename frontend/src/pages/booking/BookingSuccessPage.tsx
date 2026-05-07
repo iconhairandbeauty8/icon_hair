@@ -53,10 +53,6 @@ export default function BookingSuccessPage() {
               <span className="text-onyx-500">Date & Time</span>
               <span className="font-medium">{new Date(booking.start_time).toLocaleString('en-NZ')}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-onyx-500">Branch</span>
-              <span className="font-medium">{booking.branch_name}</span>
-            </div>
           </div>
         )}
 
