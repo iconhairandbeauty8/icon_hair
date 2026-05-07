@@ -111,7 +111,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl p-5 shadow-soft border border-gray-100">
           <h3 className="font-display font-semibold text-onyx-900 mb-4">Staff Today</h3>
           <div className="space-y-3">
-            {(dash?.staff_on_duty || []).map((member: any) => (
+            {(Array.isArray(dash?.staff_on_duty) ? dash.staff_on_duty : []).map((member: any) => (
               <div key={member.id} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gold-gradient flex-shrink-0 flex items-center justify-center text-white font-semibold text-xs overflow-hidden">
                   {member.image_url

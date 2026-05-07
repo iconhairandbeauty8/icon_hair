@@ -47,10 +47,10 @@ export default function BookingPage() {
     enabled: step === 3 && !!selectedBranch && !!selectedService && !!selectedDate,
   });
 
-  const branches: Branch[] = branchesRes?.data || [];
-  const services: Service[] = servicesRes?.data || [];
-  const staffList: Employee[] = staffRes?.data || [];
-  const slots: string[] = slotsRes?.data?.slots || [];
+  const branches: Branch[] = Array.isArray(branchesRes?.data) ? branchesRes.data : [];
+  const services: Service[] = Array.isArray(servicesRes?.data) ? servicesRes.data : [];
+  const staffList: Employee[] = Array.isArray(staffRes?.data) ? staffRes.data : [];
+  const slots: string[] = Array.isArray(slotsRes?.data?.slots) ? slotsRes.data.slots : [];
 
   const servicesByCategory = services.reduce((acc: Record<string, Service[]>, s) => {
     if (!acc[s.category]) acc[s.category] = [];

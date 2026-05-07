@@ -27,8 +27,8 @@ export default function AdminBookings() {
     onError: () => toast.error('Update failed'),
   });
 
-  const bookings: Booking[] = data?.data?.bookings || [];
-  const total = data?.data?.total || 0;
+  const bookings: Booking[] = Array.isArray(data?.data?.bookings) ? data.data.bookings : [];
+  const total = typeof data?.data?.total === 'number' ? data.data.total : 0;
 
   return (
     <div className="space-y-5">

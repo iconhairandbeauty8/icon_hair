@@ -16,7 +16,7 @@ export default function AdminInventory() {
   const { data: alertsData } = useQuery({ queryKey:['inventory-alerts'], queryFn: inventoryApi.alerts });
 
   const items = Array.isArray(data?.data) ? data.data : [];
-  const alerts = alertsData?.data || [];
+  const alerts = Array.isArray(alertsData?.data) ? alertsData.data : [];
 
   const create = useMutation({
     mutationFn: inventoryApi.create,

@@ -16,8 +16,8 @@ export default function AdminServices() {
 
   const { data, isLoading } = useQuery({ queryKey:['admin-services'], queryFn:() => serviceApi.list() });
   const { data: branchRes } = useQuery({ queryKey:['branches'], queryFn: branchApi.list });
-  const branches = branchRes?.data || [];
-  const services = (data?.data || []).filter((s:any) => !catFilter || s.category === catFilter);
+  const branches = Array.isArray(branchRes?.data) ? branchRes.data : [];
+  const services = (Array.isArray(data?.data) ? data.data : []).filter((s:any) => !catFilter || s.category === catFilter);
 
   const save = useMutation({
     mutationFn: (d:any) => editTarget ? serviceApi.update(editTarget.id, d) : serviceApi.create(d),

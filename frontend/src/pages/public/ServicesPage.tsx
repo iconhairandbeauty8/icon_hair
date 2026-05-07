@@ -12,7 +12,7 @@ export function ServicesPage() {
   const { data: catData } = useQuery({ queryKey: ['service-cats'], queryFn: serviceApi.categories });
 
   const services = Array.isArray(data?.data) ? data.data : [];
-  const categories = catData?.data || [];
+  const categories = Array.isArray(catData?.data) ? catData.data : [];
 
   return (
     <div className="min-h-screen pt-20">
