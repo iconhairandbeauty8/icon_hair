@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { staffApi } from '../../services/api';
+import { staffApi, resolveImageUrl } from '../../services/api';
 
 export default function StaffPage() {
   const { data, isLoading } = useQuery({ queryKey: ['staff-pub'], queryFn: () => staffApi.list() });
@@ -26,7 +26,7 @@ export default function StaffPage() {
               <motion.div key={member.id} initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} transition={{delay:i*0.07}} viewport={{once:true}} className="card-luxury group overflow-hidden">
                 <div className="aspect-[3/4] overflow-hidden bg-gradient-to-br from-gold-100 to-champagne">
                   {member.image_url
-                    ? <img src={member.image_url} alt={`${member.first_name} ${member.last_name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+                    ? <img src={resolveImageUrl(member.image_url)} alt={`${member.first_name} ${member.last_name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
                     : <div className="w-full h-full flex items-center justify-center text-6xl text-gold-300 font-display">{member.first_name?.[0]}</div>
                   }
                 </div>

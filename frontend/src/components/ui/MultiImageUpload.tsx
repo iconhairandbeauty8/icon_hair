@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { uploadApi } from '../../services/api';
+import { uploadApi, resolveImageUrl } from '../../services/api';
 
 interface Props {
   values: string[];
@@ -50,7 +50,7 @@ export default function MultiImageUpload({ values, onChange, folder = 'general',
         <div className="grid grid-cols-3 gap-2">
           {values.map((url, i) => (
             <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img src={resolveImageUrl(url)} alt="" className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => remove(i)}

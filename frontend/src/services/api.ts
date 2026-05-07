@@ -1,9 +1,18 @@
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api',
+  baseURL: API_BASE ? `${API_BASE}/api` : '/api',
   timeout: 15000,
 });
+
+// Resolve relative /api/images/... URLs to the correct backend host
+export function resolveImageUrl(url: string | undefined | null): string {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+}
 
 // Attach JWT to every request
 api.interceptors.request.use((config) => {

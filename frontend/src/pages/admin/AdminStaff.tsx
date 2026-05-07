@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { staffApi, branchApi, serviceApi } from '../../services/api';
+import { staffApi, branchApi, serviceApi, resolveImageUrl } from '../../services/api';
 import ImageUpload from '../../components/ui/ImageUpload';
 
 export default function AdminStaff() {
@@ -47,7 +47,7 @@ export default function AdminStaff() {
             <div key={member.id} className="card-luxury group">
               <div className="aspect-square bg-gradient-to-br from-gold-100 to-champagne overflow-hidden">
                 {member.image_url
-                  ? <img src={member.image_url} alt={member.first_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ? <img src={resolveImageUrl(member.image_url)} alt={member.first_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   : <div className="w-full h-full flex items-center justify-center text-4xl text-gold-400">{member.first_name?.[0]}</div>
                 }
               </div>

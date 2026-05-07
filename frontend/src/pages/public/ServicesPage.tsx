@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { serviceApi } from '../../services/api';
+import { serviceApi, resolveImageUrl } from '../../services/api';
 
 export function ServicesPage() {
   const [params] = useSearchParams();
@@ -45,7 +45,7 @@ export function ServicesPage() {
                 {/* Image */}
                 <div className="aspect-video bg-gradient-to-br from-gold-100 to-champagne overflow-hidden">
                   {s.image_url
-                    ? <img src={s.image_url} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ? <img src={resolveImageUrl(s.image_url)} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     : <div className="w-full h-full flex items-center justify-center text-4xl text-gold-300">✂️</div>
                   }
                 </div>

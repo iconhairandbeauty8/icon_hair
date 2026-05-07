@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { branchApi, serviceApi, staffApi, bookingApi, voucherApi } from '../../services/api';
+import { branchApi, serviceApi, staffApi, bookingApi, voucherApi, resolveImageUrl } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import type { Branch, Service, Employee } from '../../types';
 
@@ -194,7 +194,7 @@ export default function BookingPage() {
                           {/* Thumbnail */}
                           <div className="w-20 h-20 flex-shrink-0 bg-gradient-to-br from-gold-100 to-champagne overflow-hidden">
                             {(service as any).image_url
-                              ? <img src={(service as any).image_url} alt={service.name} className="w-full h-full object-cover" />
+                              ? <img src={resolveImageUrl((service as any).image_url)} alt={service.name} className="w-full h-full object-cover" />
                               : <div className="w-full h-full flex items-center justify-center text-2xl text-gold-300">✂️</div>
                             }
                           </div>
@@ -248,7 +248,7 @@ export default function BookingPage() {
                     >
                       <div className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-3 bg-gradient-to-br from-gold-100 to-champagne">
                         {member.image_url ? (
-                          <img src={member.image_url} alt={member.first_name} className="w-full h-full object-cover" />
+                          <img src={resolveImageUrl(member.image_url)} alt={member.first_name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xl text-gold-400">
                             {member.first_name[0]}

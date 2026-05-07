@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { promotionApi } from '../../services/api';
+import { promotionApi, resolveImageUrl } from '../../services/api';
 import ImageUpload from '../../components/ui/ImageUpload';
 
 export default function AdminPromotions() {
@@ -26,7 +26,7 @@ export default function AdminPromotions() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {promos.map((p:any)=>(
           <div key={p.id} className="card-luxury overflow-hidden">
-            {p.image_url&&<div className="h-32 overflow-hidden"><img src={p.image_url} alt={p.title} className="w-full h-full object-cover"/></div>}
+            {p.image_url&&<div className="h-32 overflow-hidden"><img src={resolveImageUrl(p.image_url)} alt={p.title} className="w-full h-full object-cover"/></div>}
             <div className="p-5">
               <span className="text-xs text-gold-600 font-medium">{TYPE_LABELS[p.type]||p.type}</span>
               <h3 className="font-semibold text-onyx-900 mt-1">{p.title}</h3>

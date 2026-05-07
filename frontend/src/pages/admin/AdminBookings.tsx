@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { bookingApi } from '../../services/api';
+import { bookingApi, resolveImageUrl } from '../../services/api';
 import type { Booking, BookingStatus } from '../../types';
 
 const STATUSES: BookingStatus[] = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
@@ -102,7 +102,7 @@ export default function AdminBookings() {
                       <td className="px-4 py-3 hidden md:table-cell">
                         <div className="flex items-center gap-2">
                           {b.staff_image && (
-                            <img src={b.staff_image} className="w-6 h-6 rounded-full object-cover" alt="" />
+                            <img src={resolveImageUrl(b.staff_image)} className="w-6 h-6 rounded-full object-cover" alt="" />
                           )}
                           <span className="text-onyx-700">{b.staff_name}</span>
                         </div>

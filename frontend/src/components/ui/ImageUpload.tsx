@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { uploadApi } from '../../services/api';
+import { uploadApi, resolveImageUrl } from '../../services/api';
 
 interface Props {
   value: string;           // current image URL
@@ -71,7 +71,7 @@ export default function ImageUpload({
       >
         {value ? (
           <>
-            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+            <img src={resolveImageUrl(value)} alt="Preview" className="w-full h-full object-cover" />
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <span className="text-white text-sm font-medium">📁 Change Image</span>

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { serviceApi, branchApi } from '../../services/api';
+import { serviceApi, branchApi, resolveImageUrl } from '../../services/api';
 import ImageUpload from '../../components/ui/ImageUpload';
 
 const CATEGORIES = ['Hair','Hair Colour','Hair Treatment','Skincare','Nails','Beauty','Wellness','Barbering'];
@@ -46,7 +46,7 @@ export default function AdminServices() {
               {/* Image */}
               <div className="aspect-video bg-gradient-to-br from-gold-100 to-champagne overflow-hidden">
                 {s.image_url
-                  ? <img src={s.image_url} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ? <img src={resolveImageUrl(s.image_url)} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   : <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gold-400">
                       <span className="text-3xl">✂️</span>
                       <span className="text-xs font-medium">{s.category}</span>

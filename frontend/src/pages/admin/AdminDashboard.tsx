@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
-import { dashboardApi, reportApi, bookingApi } from '../../services/api';
+import { dashboardApi, reportApi, bookingApi, resolveImageUrl } from '../../services/api';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import type { BookingStatus } from '../../types';
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
               <div key={member.id} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gold-gradient flex-shrink-0 flex items-center justify-center text-white font-semibold text-xs overflow-hidden">
                   {member.image_url
-                    ? <img src={member.image_url} alt={member.first_name} className="w-full h-full object-cover" />
+                    ? <img src={resolveImageUrl(member.image_url)} alt={member.first_name} className="w-full h-full object-cover" />
                     : `${member.first_name[0]}${member.last_name[0]}`}
                 </div>
                 <div className="flex-1 min-w-0">

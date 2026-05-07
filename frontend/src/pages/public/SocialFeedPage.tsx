@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { socialApi } from '../../services/api';
+import { socialApi, resolveImageUrl } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 
@@ -41,7 +41,7 @@ export default function SocialFeedPage() {
               className="card-luxury overflow-hidden">
               {post.image_urls?.[0] && (
                 <div className="aspect-video overflow-hidden">
-                  <img src={post.image_urls[0]} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"/>
+                  <img src={resolveImageUrl(post.image_urls[0])} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"/>
                 </div>
               )}
               <div className="p-6">
@@ -65,7 +65,7 @@ export default function SocialFeedPage() {
                   <div className="grid grid-cols-3 gap-2 mt-4">
                     {post.image_urls.slice(1).map((url: string, j: number) => (
                       <div key={j} className="aspect-square rounded-xl overflow-hidden">
-                        <img src={url} alt="" className="w-full h-full object-cover"/>
+                        <img src={resolveImageUrl(url)} alt="" className="w-full h-full object-cover"/>
                       </div>
                     ))}
                   </div>

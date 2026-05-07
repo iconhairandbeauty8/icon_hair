@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { reviewApi, serviceApi, staffApi } from '../../services/api';
+import { reviewApi, serviceApi, staffApi, resolveImageUrl } from '../../services/api';
 import ServicesCarousel from '../../components/ui/ServicesCarousel';
 
 /* ─── Animation variant ──────────────────────────────────── */
@@ -210,7 +210,7 @@ export default function HomePage() {
                   >
                     <div className="aspect-video bg-gray-100 overflow-hidden">
                       {service.image_url
-                        ? <img src={service.image_url} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ? <img src={resolveImageUrl(service.image_url)} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         : <div className="w-full h-full flex items-center justify-center text-4xl text-gray-200">✂️</div>
                       }
                     </div>
@@ -319,7 +319,7 @@ export default function HomePage() {
               >
                 <div className="aspect-square bg-gray-50 overflow-hidden">
                   {member.image_url ? (
-                    <img src={member.image_url} alt={member.first_name}
+                    <img src={resolveImageUrl(member.image_url)} alt={member.first_name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-purple-200">

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { socialApi } from '../../services/api';
+import { socialApi, resolveImageUrl } from '../../services/api';
 import MultiImageUpload from '../../components/ui/MultiImageUpload';
 
 export default function AdminSocial() {
@@ -28,7 +28,7 @@ export default function AdminSocial() {
           <div key={post.id} className="card-luxury overflow-hidden">
             {post.image_urls?.[0]&&(
               <div className="aspect-video overflow-hidden bg-gray-100">
-                <img src={post.image_urls[0]} alt="" className="w-full h-full object-cover"/>
+                <img src={resolveImageUrl(post.image_urls[0])} alt="" className="w-full h-full object-cover"/>
               </div>
             )}
             <div className="p-5">
