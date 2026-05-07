@@ -3,12 +3,12 @@ import toast from 'react-hot-toast';
 import { uploadApi, resolveImageUrl } from '../../services/api';
 
 interface Props {
-  value: string;           // current image URL
+  value: string;
   onChange: (url: string) => void;
-  folder?: string;         // upload sub-folder
+  folder?: string;
   label?: string;
   className?: string;
-  aspectRatio?: 'square' | 'video' | 'banner'; // preview shape
+  aspectRatio?: 'square' | 'video' | 'banner';
 }
 
 export default function ImageUpload({
@@ -22,11 +22,21 @@ export default function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [localPreview, setLocalPreview] = useState<string>('');
+  const blobRef = useRef<string>('');
 
-  // Clean up blob URL on unmount
+  // Revoke blob on unmount
   useEffect(() => {
-    return () => { if (localPreview) URL.revokeObjectURL(localPreview); };
-  }, [localPreview]);
+    return () => { if (blobRef.current) URL.revokeObjectURL(blobRef.current); };
+  }, []);
+
+  // Clear local preview when parent resets value to empty
+  useEffect(() => {
+    if (!value && blobRef.current) {
+      URL.revokeObjectURL(blobRef.current);
+      blobRef.current = '';
+      setLocalPreview('');
+    }
+  }, [value]);
 
   const aspectClass = {
     square: 'aspect-square',
@@ -44,20 +54,25 @@ export default function ImageUpload({
       return;
     }
 
-    // Show local preview immediately before upload finishes
+    // Revoke any previous blob
+    if (blobRef.current) URL.revokeObjectURL(blobRef.current);
     const blobUrl = URL.createObjectURL(file);
+    blobRef.current = blobUrl;
     setLocalPreview(blobUrl);
     setUploading(true);
+
     try {
       const res = await uploadApi.single(file, folder);
       onChange(res.data.url);
       toast.success('Image uploaded!');
+      // Keep localPreview — blob stays visible until component unmounts or value is cleared
     } catch {
+      URL.revokeObjectURL(blobUrl);
+      blobRef.current = '';
+      setLocalPreview('');
       toast.error('Upload failed. Please try again.');
     } finally {
       setUploading(false);
-      URL.revokeObjectURL(blobUrl);
-      setLocalPreview('');
     }
   };
 
@@ -68,14 +83,13 @@ export default function ImageUpload({
     if (file) handleFile(file);
   };
 
-  // Use local blob while uploading, otherwise resolve server URL
+  // Show local blob while available, otherwise fall back to resolved server URL
   const displaySrc = localPreview || resolveImageUrl(value);
 
   return (
     <div className="space-y-1.5">
       <label className="block text-xs font-medium text-onyx-600">{label}</label>
 
-      {/* Preview / Drop zone */}
       <div
         className={`relative w-full ${aspectClass} rounded-xl border-2 border-dashed overflow-hidden cursor-pointer transition-all
           ${dragOver ? 'border-gold-400 bg-gold-50' : 'border-gray-200 bg-gray-50 hover:border-gold-300 hover:bg-gold-50/30'}`}
@@ -87,8 +101,7 @@ export default function ImageUpload({
         {displaySrc ? (
           <>
             <img src={displaySrc} alt="Preview" className="w-full h-full object-cover" />
-            {/* Overlay on hover */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
               <span className="text-white text-sm font-medium">📁 Change Image</span>
             </div>
           </>
@@ -100,7 +113,6 @@ export default function ImageUpload({
           </div>
         )}
 
-        {/* Uploading overlay */}
         {uploading && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -108,11 +120,15 @@ export default function ImageUpload({
         )}
       </div>
 
-      {/* Remove button */}
-      {value && !uploading && (
+      {(value || localPreview) && !uploading && (
         <button
           type="button"
-          onClick={e => { e.stopPropagation(); onChange(''); }}
+          onClick={e => {
+            e.stopPropagation();
+            if (blobRef.current) { URL.revokeObjectURL(blobRef.current); blobRef.current = ''; }
+            setLocalPreview('');
+            onChange('');
+          }}
           className="text-xs text-red-400 hover:text-red-600 transition-colors"
         >
           ✕ Remove image
