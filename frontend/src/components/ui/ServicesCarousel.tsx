@@ -1,50 +1,33 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { serviceApi, resolveImageUrl } from '../../services/api';
 
-const services = [
-  {
-    icon: '✂️',
-    title: 'Hair Styling',
-    desc: 'Expert cuts, balayage, and treatments tailored to your unique look and personality.',
-    category: 'Hair',
-    badge: null,
-  },
-  {
-    icon: '💅',
-    title: 'Nail Care',
-    desc: 'Manicures, pedicures, and nail art crafted by certified nail specialists.',
-    category: 'Nails',
-    badge: null,
-  },
-  {
-    icon: '✨',
-    title: 'Skincare',
-    desc: 'Rejuvenating facials and skin treatments for a radiant, healthy glow.',
-    category: 'Skincare',
-    badge: 'Popular',
-  },
-  {
-    icon: '💆',
-    title: 'Wellness',
-    desc: 'Relaxing massage and holistic therapies for total mind-body harmony.',
-    category: 'Wellness',
-    badge: null,
-  },
-  {
-    icon: '👁️',
-    title: 'Beauty',
-    desc: 'Lash extensions, brow shaping, and premium precision beauty services.',
-    category: 'Beauty',
-    badge: null,
-  },
-];
+const CATEGORY_ICON: Record<string, string> = {
+  hair: '✂️', nails: '💅', skincare: '✨', wellness: '💆',
+  beauty: '👁️', makeup: '💄', massage: '🤲', waxing: '🌿', threading: '🧵',
+};
 
 export default function ServicesCarousel() {
-  const [active, setActive] = useState(2);
+  const [active, setActive] = useState(0);
   const [spacing, setSpacing] = useState(250);
   const [visibleRange, setVisibleRange] = useState(2);
   const [cardWidth, setCardWidth] = useState(272);
+
+  const { data: svcData, isLoading } = useQuery({
+    queryKey: ['services-carousel'],
+    queryFn: () => serviceApi.list(),
+  });
+
+  const services: any[] = Array.isArray(svcData?.data)
+    ? [...svcData.data].sort((a, b) => (b.booking_count ?? 0) - (a.booking_count ?? 0))
+    : [];
+
+  // Keep active index in bounds when service list changes
+  useEffect(() => {
+    setActive(i => (services.length > 0 ? Math.min(i, services.length - 1) : 0));
+  }, [services.length]);
 
   useEffect(() => {
     const update = () => {
@@ -108,6 +91,17 @@ export default function ServicesCarousel() {
       </div>
 
       {/* Card deck */}
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-6" style={{ height: 420 }}>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl bg-white border border-gray-100 shadow-md skeleton"
+              style={{ width: cardWidth, height: 380, opacity: 1 - i * 0.3, flexShrink: 0 }}
+            />
+          ))}
+        </div>
+      ) : services.length === 0 ? null : (
       <div
         className="relative mx-auto"
         style={{ height: visibleRange === 0 ? 400 : 420, perspective: '1400px' }}
@@ -124,7 +118,7 @@ export default function ServicesCarousel() {
 
           return (
             <motion.div
-              key={svc.title}
+              key={svc.id}
               className="absolute top-1/2 left-1/2 cursor-pointer select-none"
               style={{
                 width: cardWidth,
@@ -150,51 +144,63 @@ export default function ServicesCarousel() {
               }}
             >
               <div
-                className={`h-[380px] rounded-2xl p-6 flex flex-col justify-between transition-shadow duration-300 ${
+                className={`h-[380px] rounded-2xl overflow-hidden flex flex-col transition-shadow duration-300 ${
                   isCenter
                     ? 'bg-white shadow-2xl shadow-purple-200/70 border border-purple-100 ring-1 ring-purple-50'
                     : 'bg-white shadow-md border border-gray-100'
                 }`}
               >
-                <div>
-                  {isCenter && svc.badge && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full mb-4">
-                      ⭐ {svc.badge}
-                    </span>
-                  )}
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl mb-4 transition-colors ${
-                    isCenter ? 'bg-purple-100' : 'bg-gray-50'
-                  }`}>
-                    {svc.icon}
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg leading-snug mb-2">
-                    {svc.title}
-                  </h3>
-                  <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
-                    {svc.desc}
-                  </p>
+                {/* Service image or icon */}
+                <div className={`h-36 shrink-0 flex items-center justify-center overflow-hidden ${isCenter ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                  {svc.image_url
+                    ? <img src={resolveImageUrl(svc.image_url)} alt={svc.name} className="w-full h-full object-cover" />
+                    : <span className="text-4xl">{CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}</span>
+                  }
                 </div>
 
-                <div>
-                  <div className={`w-8 h-px mb-4 ${isCenter ? 'bg-purple-300' : 'bg-gray-200'}`} />
-                  <Link
-                    to={`/services?category=${svc.category}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`inline-flex items-center gap-1.5 text-sm font-semibold transition-colors group ${
-                      isCenter
-                        ? 'text-purple-600 hover:text-purple-800'
-                        : 'text-gray-400 hover:text-gray-700'
-                    }`}
-                  >
-                    Learn more
-                    <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-                  </Link>
+                {/* Info */}
+                <div className="p-5 flex flex-col justify-between flex-1">
+                  <div>
+                    {svc.category && (
+                      <span className={`text-[10px] font-bold tracking-widest uppercase ${isCenter ? 'text-purple-500' : 'text-gray-400'}`}>
+                        {svc.category}
+                      </span>
+                    )}
+                    <h3 className="font-bold text-gray-900 text-base leading-snug mt-0.5 mb-1.5">
+                      {svc.name}
+                    </h3>
+                    <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">
+                      {svc.description}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className={`w-8 h-px my-3 ${isCenter ? 'bg-purple-300' : 'bg-gray-200'}`} />
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className={`font-bold text-sm ${isCenter ? 'text-gray-900' : 'text-gray-600'}`}>NZ${svc.price}</div>
+                        <div className="text-gray-400 text-xs">{svc.duration_minutes} min</div>
+                      </div>
+                      <Link
+                        to={`/book?service_id=${svc.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+                          isCenter
+                            ? 'bg-purple-600 text-white hover:bg-purple-700'
+                            : 'border border-gray-200 text-gray-400 hover:border-purple-400 hover:text-purple-600'
+                        }`}
+                      >
+                        Book
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
           );
         })}
       </div>
+      )}
 
       {/* Navigation */}
       <div className="relative flex items-center justify-center gap-4 mt-6">
