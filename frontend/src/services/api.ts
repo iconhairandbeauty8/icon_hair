@@ -1,17 +1,19 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
-
+// Always use relative /api — the frontend proxy server (server.js) forwards to the backend.
+// This means <img src="/api/images/123"> works correctly on any environment.
 const api = axios.create({
-  baseURL: API_BASE ? `${API_BASE}/api` : '/api',
+  baseURL: '/api',
   timeout: 15000,
 });
 
-// Resolve relative /api/images/... URLs to the correct backend host
+// Resolve image URLs — relative paths are served via the proxy, absolute URLs pass through.
 export function resolveImageUrl(url: string | undefined | null): string {
   if (!url) return '';
+  // Already absolute — use as-is
   if (url.startsWith('http')) return url;
-  return `${API_BASE}${url}`;
+  // Relative /api/images/... — served via frontend proxy
+  return url;
 }
 
 // Attach JWT to every request
