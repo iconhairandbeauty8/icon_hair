@@ -27,9 +27,9 @@ export default function BookingPage() {
 
   const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: branchApi.list });
   const { data: servicesRes } = useQuery({
-    queryKey: ['services', selectedBranch?.id],
-    queryFn: () => serviceApi.list({ branch_id: selectedBranch?.id }),
-    enabled: step === 0 && !!selectedBranch,
+    queryKey: ['services'],
+    queryFn: () => serviceApi.list(),
+    enabled: step === 0,
   });
   const { data: staffRes } = useQuery({
     queryKey: ['staff', selectedBranch?.id, selectedService?.id],
