@@ -33,8 +33,9 @@ router.post('/single', authenticate, upload.single('image'), async (req: Request
     );
 
     const image = result.rows[0];
-    const base = process.env.APP_URL?.replace(/\/$/, '') || `${req.protocol}://${req.get('host')}`;
-    const url = `${base}/api/images/${image.id}`;
+    const url = process.env.APP_URL
+      ? `${process.env.APP_URL.replace(/\/$/, '')}/api/images/${image.id}`
+      : `/api/images/${image.id}`;
     res.json({ url, id: image.id, filename: image.filename, size: image.file_size });
   } catch (err) {
     console.error('Upload error:', err);
@@ -61,8 +62,10 @@ router.post('/multiple', authenticate, upload.array('images', 10), async (req: R
          RETURNING id`,
         [file.buffer, file.mimetype, file.originalname, file.size, folder, userId]
       );
-      const base = process.env.APP_URL?.replace(/\/$/, '') || `${req.protocol}://${req.get('host')}`;
-      urls.push(`${base}/api/images/${result.rows[0].id}`);
+      const imgUrl = process.env.APP_URL
+        ? `${process.env.APP_URL.replace(/\/$/, '')}/api/images/${result.rows[0].id}`
+        : `/api/images/${result.rows[0].id}`;
+      urls.push(imgUrl);
     }
     res.json({ urls });
   } catch (err) {

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { uploadApi, resolveImageUrl } from '../../services/api';
 
@@ -21,6 +21,12 @@ export default function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string>('');
+
+  // Clean up blob URL on unmount
+  useEffect(() => {
+    return () => { if (localPreview) URL.revokeObjectURL(localPreview); };
+  }, [localPreview]);
 
   const aspectClass = {
     square: 'aspect-square',
@@ -37,6 +43,10 @@ export default function ImageUpload({
       toast.error('Image must be under 5MB');
       return;
     }
+
+    // Show local preview immediately before upload finishes
+    const blobUrl = URL.createObjectURL(file);
+    setLocalPreview(blobUrl);
     setUploading(true);
     try {
       const res = await uploadApi.single(file, folder);
@@ -46,6 +56,8 @@ export default function ImageUpload({
       toast.error('Upload failed. Please try again.');
     } finally {
       setUploading(false);
+      URL.revokeObjectURL(blobUrl);
+      setLocalPreview('');
     }
   };
 
@@ -55,6 +67,9 @@ export default function ImageUpload({
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   };
+
+  // Use local blob while uploading, otherwise resolve server URL
+  const displaySrc = localPreview || resolveImageUrl(value);
 
   return (
     <div className="space-y-1.5">
@@ -69,9 +84,9 @@ export default function ImageUpload({
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
       >
-        {value ? (
+        {displaySrc ? (
           <>
-            <img src={resolveImageUrl(value)} alt="Preview" className="w-full h-full object-cover" />
+            <img src={displaySrc} alt="Preview" className="w-full h-full object-cover" />
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <span className="text-white text-sm font-medium">📁 Change Image</span>
@@ -79,23 +94,14 @@ export default function ImageUpload({
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-onyx-400">
-            {uploading ? (
-              <>
-                <div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs">Uploading...</span>
-              </>
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 text-xl">📷</div>
-                <p className="text-xs font-medium text-onyx-500">Click or drag & drop</p>
-                <p className="text-xs text-onyx-400">PNG, JPG, WebP · Max 5MB</p>
-              </>
-            )}
+            <div className="w-10 h-10 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 text-xl">📷</div>
+            <p className="text-xs font-medium text-onyx-500">Click or drag & drop</p>
+            <p className="text-xs text-onyx-400">PNG, JPG, WebP · Max 5MB</p>
           </div>
         )}
 
         {/* Uploading overlay */}
-        {uploading && value && (
+        {uploading && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>

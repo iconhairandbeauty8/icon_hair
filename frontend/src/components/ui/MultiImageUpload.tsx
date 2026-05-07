@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { uploadApi, resolveImageUrl } from '../../services/api';
 
@@ -14,6 +14,11 @@ export default function MultiImageUpload({ values, onChange, folder = 'general',
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [localPreviews, setLocalPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    return () => { localPreviews.forEach(url => URL.revokeObjectURL(url)); };
+  }, [localPreviews]);
 
   const handleFiles = async (files: FileList | File[]) => {
     const fileArr = Array.from(files).filter(f => f.type.startsWith('image/'));
@@ -22,6 +27,9 @@ export default function MultiImageUpload({ values, onChange, folder = 'general',
     if (remaining <= 0) { toast.error(`Maximum ${max} images allowed`); return; }
     const toUpload = fileArr.slice(0, remaining);
 
+    // Show local previews immediately
+    const blobs = toUpload.map(f => URL.createObjectURL(f));
+    setLocalPreviews(blobs);
     setUploading(true);
     try {
       if (toUpload.length === 1) {
@@ -35,34 +43,48 @@ export default function MultiImageUpload({ values, onChange, folder = 'general',
     } catch {
       toast.error('Upload failed');
     } finally {
+      blobs.forEach(url => URL.revokeObjectURL(url));
+      setLocalPreviews([]);
       setUploading(false);
     }
   };
 
   const remove = (i: number) => onChange(values.filter((_, idx) => idx !== i));
 
+  const allDisplayUrls = [
+    ...values.map(resolveImageUrl),
+    ...localPreviews,
+  ];
+
   return (
     <div className="space-y-2">
       <label className="block text-xs font-medium text-onyx-600">{label}</label>
 
-      {/* Existing images grid */}
-      {values.length > 0 && (
+      {/* Images grid (existing + local previews) */}
+      {allDisplayUrls.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
-          {values.map((url, i) => (
+          {allDisplayUrls.map((url, i) => (
             <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
-              <img src={resolveImageUrl(url)} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >✕</button>
+              <img src={url} alt="" className="w-full h-full object-cover" />
+              {i < values.length && (
+                <button
+                  type="button"
+                  onClick={() => remove(i)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >✕</button>
+              )}
+              {i >= values.length && (
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Upload zone */}
-      {values.length < max && (
+      {values.length < max && !uploading && (
         <div
           className={`w-full h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all
             ${dragOver ? 'border-gold-400 bg-gold-50' : 'border-gray-200 bg-gray-50 hover:border-gold-300'}`}
@@ -71,15 +93,9 @@ export default function MultiImageUpload({ values, onChange, folder = 'general',
           onDragLeave={() => setDragOver(false)}
           onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
         >
-          {uploading ? (
-            <div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>
-              <span className="text-gold-500 text-lg">📁</span>
-              <p className="text-xs text-onyx-500 font-medium">Click or drag to add images</p>
-              <p className="text-xs text-onyx-400">{values.length}/{max} · Max 5MB each</p>
-            </>
-          )}
+          <span className="text-gold-500 text-lg">📁</span>
+          <p className="text-xs text-onyx-500 font-medium">Click or drag to add images</p>
+          <p className="text-xs text-onyx-400">{values.length}/{max} · Max 5MB each</p>
         </div>
       )}
 
