@@ -65,8 +65,8 @@ export default function ServicesCarousel() {
       {/* Blend in from white hero above */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent z-10" />
 
-      {/* Purple radial glow */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_55%,rgba(124,58,237,0.18),transparent)]" />
+      {/* Purple gradient radial glow */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_55%,rgba(124,58,237,0.22),rgba(147,51,234,0.08),transparent)]" />
 
       {/* Subtle grid texture */}
       <div
@@ -151,7 +151,7 @@ export default function ServicesCarousel() {
                 <div
                   className={`h-[400px] rounded-3xl overflow-hidden flex flex-col transition-all duration-300 ${
                     isCenter
-                      ? 'bg-gray-900 border border-purple-500/40 shadow-2xl shadow-purple-500/30 ring-1 ring-purple-400/20'
+                      ? 'bg-gray-900 border border-[#9333ea]/50 shadow-2xl shadow-[#7c3aed]/30 ring-1 ring-[#9333ea]/20'
                       : 'bg-gray-900/50 border border-white/[0.07]'
                   }`}
                 >
@@ -162,7 +162,7 @@ export default function ServicesCarousel() {
                       : (
                         <div className={`w-full h-full flex items-center justify-center text-5xl ${
                           isCenter
-                            ? 'bg-gradient-to-br from-purple-900 via-purple-950 to-gray-900'
+                            ? 'bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-gray-900'
                             : 'bg-gray-800/60'
                         }`}>
                           {CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}
@@ -173,13 +173,13 @@ export default function ServicesCarousel() {
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
                     {/* Category pill */}
                     {svc.category && (
-                      <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase text-white/90 bg-purple-600/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-purple-400/30">
+                      <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase text-white bg-gold-gradient backdrop-blur-md px-2.5 py-1 rounded-full">
                         {svc.category}
                       </span>
                     )}
                     {/* Popular badge */}
                     {isCenter && svc.booking_count > 0 && (
-                      <span className="absolute top-3 right-3 text-[10px] font-bold tracking-wide text-purple-300 bg-purple-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-purple-500/30">
+                      <span className="absolute top-3 right-3 text-[10px] font-bold tracking-wide text-white bg-gold-gradient backdrop-blur-md px-2.5 py-1 rounded-full">
                         ★ Popular
                       </span>
                     )}
@@ -210,7 +210,7 @@ export default function ServicesCarousel() {
                           onClick={(e) => e.stopPropagation()}
                           className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 ${
                             isCenter
-                              ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-600/40'
+                              ? 'bg-gold-gradient text-white shadow-gold hover:opacity-90'
                               : 'bg-white/8 text-white/50 border border-white/10 hover:bg-white/15'
                           }`}
                         >
@@ -231,7 +231,7 @@ export default function ServicesCarousel() {
         <button
           onClick={prev}
           className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white/60
-                     hover:bg-purple-600 hover:border-purple-600 hover:text-white transition-all duration-200"
+                     hover:bg-gold-gradient hover:border-transparent hover:text-white transition-all duration-200"
         >
           ←
         </button>
@@ -242,8 +242,8 @@ export default function ServicesCarousel() {
               onClick={() => setActive(i)}
               className={`rounded-full transition-all duration-300 ${
                 i === active
-                  ? 'w-6 h-2 bg-purple-500'
-                  : 'w-2 h-2 bg-white/20 hover:bg-purple-400/60'
+                  ? 'w-6 h-2 bg-gold-gradient'
+                  : 'w-2 h-2 bg-white/20 hover:bg-white/40'
               }`}
             />
           ))}
@@ -251,7 +251,7 @@ export default function ServicesCarousel() {
         <button
           onClick={next}
           className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white/60
-                     hover:bg-purple-600 hover:border-purple-600 hover:text-white transition-all duration-200"
+                     hover:bg-gold-gradient hover:border-transparent hover:text-white transition-all duration-200"
         >
           →
         </button>
