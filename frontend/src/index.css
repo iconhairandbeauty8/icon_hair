@@ -75,12 +75,14 @@ body {
          transition-all duration-200 hover:bg-gray-800 active:scale-95;
 }
 
-/* ─── Admin Button (keep for admin/booking pages) ────────── */
+/* ─── Admin Button ───────────────────────────────────────── */
 .btn-gold {
-  @apply bg-gold-gradient text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:shadow-gold hover:scale-105 active:scale-95;
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm
+         transition-all duration-200 hover:bg-purple-700 hover:shadow-lg hover:shadow-purple-200 active:scale-95;
 }
 .btn-outline-gold {
-  @apply border-2 border-gold-500 text-gold-600 font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:bg-gold-500 hover:text-white;
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-purple-600 text-purple-600 font-semibold text-sm
+         transition-all duration-200 hover:bg-purple-50 active:scale-95;
 }
 
 /* ─── Cards ──────────────────────────────────────────────── */
@@ -89,9 +91,9 @@ body {
          transition-all duration-300 hover:-translate-y-1 hover:shadow-md;
 }
 
-/* Admin card (keep) */
+/* Admin card */
 .card-luxury {
-  @apply bg-white rounded-2xl shadow-soft border border-onyx-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-luxury;
+  @apply bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md;
 }
 
 /* ─── Form Inputs ────────────────────────────────────────── */
@@ -101,9 +103,11 @@ body {
          focus:border-purple-400 focus:ring-4 focus:ring-purple-50;
 }
 
-/* Admin input (keep) */
+/* Admin input */
 .input-luxury {
-  @apply w-full px-4 py-3 bg-white border-2 border-onyx-200 rounded-xl font-sans text-onyx-950 placeholder-onyx-400 focus:outline-none focus:border-gold-500 transition-colors duration-200;
+  @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900
+         placeholder:text-gray-400 outline-none transition-all duration-200
+         focus:border-purple-400 focus:ring-4 focus:ring-purple-50;
 }
 
 /* ─── Section Typography ─────────────────────────────────── */
@@ -119,12 +123,12 @@ body {
 .star-filled { color: #7c3aed; }
 .star-empty  { color: #e5e7eb; }
 
-/* ─── Admin Sidebar (unchanged) ─────────────────────────── */
+/* ─── Admin Sidebar ──────────────────────────────────────── */
 .sidebar-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-onyx-500 hover:bg-gold-50 hover:text-gold-700 transition-all duration-200;
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150;
 }
 .sidebar-link.active {
-  @apply bg-gold-gradient text-white shadow-gold;
+  @apply bg-purple-50 text-purple-600;
 }
 
 /* ─── Status Badges (unchanged) ─────────────────────────── */

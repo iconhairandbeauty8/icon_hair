@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import type { BookingStatus } from '../../types';
 
-const GOLD = '#d4a01e';
+const GOLD = '#7c3aed';
 const ONYX = '#1a1a1a';
-const PIE_COLORS = ['#d4a01e', '#e3bc37', '#b87d16', '#8f5b15', '#454545'];
+const PIE_COLORS = ['#7c3aed', '#9333ea', '#6d28d9', '#5b21b6', '#4c1d95'];
 
 function StatusBadge({ status }: { status: BookingStatus }) {
   return <span className={`badge-${status}`}>{status.replace('_', ' ')}</span>;

@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { reportApi } from '../../services/api';
 
-const GOLD = '#d4a01e';
+const GOLD = '#7c3aed';
 const BLUE = '#3b82f6';
 
 type Period = 'daily' | 'weekly' | 'monthly';

@@ -40,7 +40,7 @@ export default {
         sans: ['Inter', 'sans-serif'],
       },
       backgroundImage: {
-        'gold-gradient':   'linear-gradient(135deg, #037aff 0%, #60a5fa 100%)',
+        'gold-gradient':   'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)',
         'dark-gradient':   'linear-gradient(135deg, #0d1619 0%, #1a202c 100%)',
         'luxury-gradient': 'linear-gradient(160deg, #ffffff 0%, #f7f8f9 100%)',
       },
@@ -74,7 +74,7 @@ export default {
         },
       },
       boxShadow: {
-        'gold':    '0 0 0 3px rgba(3,122,255,0.15)',
+        'gold':    '0 0 0 3px rgba(124,58,237,0.15)',
         'luxury':  '0 4px 24px rgba(0,0,0,0.10)',
         'soft':    '0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
       },

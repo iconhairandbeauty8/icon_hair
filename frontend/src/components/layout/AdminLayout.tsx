@@ -32,69 +32,76 @@ export default function AdminLayout() {
     navigate('/');
   };
 
-  // Labels visible when desktop sidebar is expanded OR mobile drawer is open
   const showLabels = mobileOpen || sidebarOpen;
 
   const SidebarNav = () => (
     <>
       {/* Logo */}
-      <div className="p-4 border-b border-white/10 flex items-center gap-3 flex-shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gold-gradient flex-shrink-0 flex items-center justify-center">
+      <div className="h-14 px-4 border-b border-gray-100 flex items-center gap-2.5 flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-purple-600 flex-shrink-0 flex items-center justify-center shadow-sm">
           <span className="text-white font-bold text-sm">L</span>
         </div>
         {showLabels && (
           <div className="overflow-hidden flex-1">
-            <div className="font-display text-white font-bold text-sm">LuxeSalon</div>
-            <div className="text-gold-400 text-[10px] tracking-wider uppercase">Admin Portal</div>
+            <div className="font-bold text-gray-900 text-base tracking-tight leading-tight">LuxeSalon</div>
+            <div className="text-purple-600 text-[10px] tracking-wider uppercase font-semibold">Admin Portal</div>
           </div>
         )}
         {/* Close on mobile */}
-        <button onClick={() => setMobileOpen(false)} className="lg:hidden text-white/40 hover:text-white ml-auto">✕</button>
+        <button onClick={() => setMobileOpen(false)} className="lg:hidden text-gray-400 hover:text-gray-600 ml-auto transition-colors">✕</button>
         {/* Collapse on desktop */}
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:block text-white/40 hover:text-white ml-auto">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:block text-gray-400 hover:text-gray-600 ml-auto transition-colors text-xs">
           {sidebarOpen ? '◀' : '▶'}
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to ||
             (item.to !== '/admin' && location.pathname.startsWith(item.to));
           return (
-            <Link key={item.to} to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? 'bg-gold-gradient text-white shadow-gold'
-                  : 'text-white/50 hover:text-white hover:bg-white/5'
+                  ? 'text-purple-600 bg-purple-50'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
               }`}
               title={!showLabels ? item.label : undefined}
             >
               <span className="text-base flex-shrink-0">{item.icon}</span>
-              {showLabels && <span className="text-sm font-medium">{item.label}</span>}
+              {showLabels && <span>{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* User */}
-      <div className="p-3 border-t border-white/10 flex-shrink-0">
-        <div className={`flex items-center gap-3 px-3 py-2 rounded-xl ${showLabels ? 'bg-white/5' : ''}`}>
-          <div className="w-8 h-8 rounded-full bg-gold-gradient flex-shrink-0 flex items-center justify-center text-white font-semibold text-xs">
+      <div className="p-2 border-t border-gray-100 flex-shrink-0">
+        <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg ${showLabels ? 'bg-gray-50' : ''}`}>
+          <div className="w-7 h-7 rounded-full bg-purple-100 flex-shrink-0 flex items-center justify-center text-purple-700 font-semibold text-xs">
             {user?.first_name?.[0]}{user?.last_name?.[0]}
           </div>
           {showLabels && (
             <div className="flex-1 overflow-hidden">
-              <div className="text-white text-sm font-medium truncate">{user?.first_name} {user?.last_name}</div>
-              <div className="text-gold-400 text-[10px] tracking-widest uppercase">{user?.role_name}</div>
+              <div className="text-gray-900 text-sm font-medium truncate">{user?.first_name} {user?.last_name}</div>
+              <div className="text-purple-600 text-[10px] tracking-widest uppercase font-semibold">{user?.role_name}</div>
             </div>
           )}
         </div>
-        <div className="mt-2 space-y-1">
-          <Link to="/" className={`sidebar-link text-xs ${!showLabels ? 'justify-center' : ''}`}>
+        <div className="mt-1 space-y-0.5">
+          <Link
+            to="/"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${!showLabels ? 'justify-center' : ''}`}
+          >
             <span>🌐</span>{showLabels && <span>View Website</span>}
           </Link>
-          <button onClick={handleLogout} className={`w-full sidebar-link text-xs text-red-400 hover:text-red-400 hover:bg-red-50/10 ${!showLabels ? 'justify-center' : ''}`}>
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors ${!showLabels ? 'justify-center' : ''}`}
+          >
             <span>🚪</span>{showLabels && <span>Logout</span>}
           </button>
         </div>
@@ -108,29 +115,29 @@ export default function AdminLayout() {
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-onyx-950 flex flex-col transition-transform duration-300 lg:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-300 lg:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarNav />
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex flex-col flex-shrink-0 bg-onyx-950 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-16'}`}>
+      <aside className={`hidden lg:flex flex-col flex-shrink-0 bg-white border-r border-gray-100 transition-all duration-300 ${sidebarOpen ? 'w-56' : 'w-14'}`}>
         <SidebarNav />
       </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <header className="bg-white border-b border-gray-100 px-4 lg:px-6 h-14 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             {/* Mobile hamburger */}
             <button
-              className="lg:hidden p-1.5 rounded-lg text-onyx-600 hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-1.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >
@@ -138,16 +145,19 @@ export default function AdminLayout() {
               <div className="w-5 h-0.5 bg-current mb-1.5" />
               <div className="w-5 h-0.5 bg-current" />
             </button>
-            <h1 className="font-display text-base lg:text-xl text-onyx-900 font-semibold truncate">
+            <h1 className="font-display text-lg text-gray-900 font-semibold truncate">
               {navItems.find(n => n.to === location.pathname || (n.to !== '/admin' && location.pathname.startsWith(n.to)))?.label || 'Dashboard'}
             </h1>
           </div>
           <div className="flex items-center gap-2 lg:gap-3">
-            <Link to="/book" target="_blank"
-              className="hidden sm:block text-xs bg-gold-gradient text-white px-3 py-1.5 rounded-lg hover:shadow-gold transition-shadow whitespace-nowrap">
+            <Link
+              to="/book"
+              target="_blank"
+              className="hidden sm:block text-sm bg-purple-600 text-white px-4 py-1.5 rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap font-medium"
+            >
               + New Booking
             </Link>
-            <div className="w-8 h-8 rounded-full bg-gold-gradient flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold flex-shrink-0">
               {user?.first_name?.[0]}
             </div>
           </div>
