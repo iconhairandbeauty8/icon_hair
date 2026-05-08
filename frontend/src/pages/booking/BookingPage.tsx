@@ -34,9 +34,10 @@ export default function BookingPage() {
   const [selectedDate, setSelectedDate]       = useState('');
   const [selectedSlot, setSelectedSlot]       = useState('');
   const [activeCategory, setActiveCategory]   = useState('All');
-  const [notes, setNotes]         = useState('');
+  const [notes, setNotes]               = useState('');
   const [voucherCode, setVoucherCode]   = useState('');
   const [voucherData, setVoucherData]   = useState<any>(null);
+  const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dateScrollRef = useRef<HTMLDivElement>(null);
@@ -89,24 +90,16 @@ export default function BookingPage() {
   const activeTier = loyaltyTiers.find((t: any) => t.key === loyaltyProfile?.membership_tier);
   const tierDiscountPct: number = activeTier?.discount ?? 0;
 
-  // Helper: given a list of promos + a price, return the one that saves the most
-  const pickBestPromo = (candidates: any[], priceBase: number) => {
-    if (candidates.length === 0) return null;
-    return candidates.reduce((best, p) => {
-      const saving = (x: any) => x.discount_type === 'percentage'
-        ? priceBase * (x.discount_value / 100)
-        : Number(x.discount_value);
-      return saving(p) > saving(best) ? p : best;
-    });
-  };
-
-  // All promos applicable to the selected service (any amount)
+  // All promos applicable to the selected service on the selected date
   const applicablePromos = selectedService
     ? promos.filter((p) => {
         const svcIds: string[] = Array.isArray(p.applicable_services) ? p.applicable_services : [];
         return svcIds.length === 0 || svcIds.includes(selectedService.id);
       })
     : [];
+
+  // Reset promo choice when service or date changes
+  useEffect(() => { setSelectedPromoId(null); }, [selectedService?.id, selectedDate]);
 
   const categories = ['All', ...Array.from(new Set(services.map((s) => s.category)))];
   const visibleServices = activeCategory === 'All'
@@ -116,9 +109,9 @@ export default function BookingPage() {
   const basePrice  = Number(selectedService?.price || 0);
   const afterTier  = tierDiscountPct > 0 ? basePrice * (1 - tierDiscountPct / 100) : basePrice;
 
-  // Pick the highest-value promo (after loyalty discount base)
-  const applicablePromo   = pickBestPromo(applicablePromos, afterTier);
-  const promoDiscountAmt  = applicablePromo
+  // Promo the customer has explicitly chosen (null = none)
+  const applicablePromo  = applicablePromos.find(p => p.id === selectedPromoId) ?? null;
+  const promoDiscountAmt = applicablePromo
     ? applicablePromo.discount_type === 'percentage'
       ? afterTier * (applicablePromo.discount_value / 100)
       : Number(applicablePromo.discount_value)
@@ -126,16 +119,12 @@ export default function BookingPage() {
   const afterPromo = applicablePromo ? Math.max(0, afterTier - promoDiscountAmt) : afterTier;
   const finalPrice = voucherData ? Math.max(0, afterPromo - voucherData.amount) : afterPromo;
 
-  // Helper: best promo for any service (for step-0 card badges)
-  const promoForService = (serviceId: string) => {
-    const priceBase = Number(services.find((s: any) => s.id === serviceId)?.price ?? 0);
-    const afterTierBase = tierDiscountPct > 0 ? priceBase * (1 - tierDiscountPct / 100) : priceBase;
-    const candidates = promos.filter((p) => {
+  // Count promos available for a service (for step-0 badges)
+  const promoCountForService = (serviceId: string) =>
+    promos.filter((p) => {
       const svcIds: string[] = Array.isArray(p.applicable_services) ? p.applicable_services : [];
       return svcIds.length === 0 || svcIds.includes(serviceId);
-    });
-    return pickBestPromo(candidates, afterTierBase);
-  };
+    }).length;
 
   // Scroll selected date into view
   useEffect(() => {
@@ -324,37 +313,24 @@ export default function BookingPage() {
                           )}
                         </div>
                         <div className="pr-5 flex-shrink-0 text-right">
-                          {(() => {
-                            const svcPromo = promoForService(service.id);
-                            const afterTierPrice = tierDiscountPct > 0
-                              ? Number(service.price) * (1 - tierDiscountPct / 100)
-                              : Number(service.price);
-                            const promoAmt = svcPromo
-                              ? svcPromo.discount_type === 'percentage'
-                                ? afterTierPrice * (svcPromo.discount_value / 100)
-                                : Number(svcPromo.discount_value)
-                              : 0;
-                            const displayPrice = Math.max(0, afterTierPrice - promoAmt);
-                            const hasDiscount = tierDiscountPct > 0 || svcPromo;
-                            return (
-                              <>
-                                {hasDiscount && (
-                                  <p className="text-onyx-400 text-xs line-through">NZ${service.price}</p>
-                                )}
-                                <p className="text-gold-600 font-bold text-base">NZ${displayPrice.toFixed(2)}</p>
-                                {tierDiscountPct > 0 && !svcPromo && (
-                                  <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
-                                    {tierDiscountPct}% off
-                                  </span>
-                                )}
-                                {svcPromo && (
-                                  <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold block mt-0.5">
-                                    🎁 {svcPromo.discount_type === 'percentage' ? `${svcPromo.discount_value}% off` : `NZ$${svcPromo.discount_value} off`}
-                                  </span>
-                                )}
-                              </>
-                            );
-                          })()}
+                          {tierDiscountPct > 0 ? (
+                            <>
+                              <p className="text-onyx-400 text-xs line-through">NZ${service.price}</p>
+                              <p className="text-gold-600 font-bold text-base">
+                                NZ${(Number(service.price) * (1 - tierDiscountPct / 100)).toFixed(2)}
+                              </p>
+                              <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                                {tierDiscountPct}% off
+                              </span>
+                            </>
+                          ) : (
+                            <p className="text-gold-600 font-bold text-base">NZ${service.price}</p>
+                          )}
+                          {promoCountForService(service.id) > 0 && (
+                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold block mt-0.5">
+                              🎁 {promoCountForService(service.id)} offer{promoCountForService(service.id) > 1 ? 's' : ''} available
+                            </span>
+                          )}
                           {selectedService?.id === service.id && (
                             <span className="text-[10px] bg-gold-500 text-white px-2 py-0.5 rounded-full mt-1 inline-block">Selected</span>
                           )}
@@ -523,6 +499,77 @@ export default function BookingPage() {
                     ))}
                   </div>
 
+                  {/* ── Offer selector ── */}
+                  {applicablePromos.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
+                      <h4 className="font-semibold text-onyx-800 text-sm mb-3">
+                        🎁 Available Offers
+                        <span className="ml-1.5 text-xs text-onyx-400 font-normal">
+                          — choose one or skip
+                        </span>
+                      </h4>
+                      <div className="space-y-2">
+                        {/* No offer option */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPromoId(null)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                            selectedPromoId === null
+                              ? 'border-gray-300 bg-gray-50'
+                              : 'border-gray-100 hover:border-gray-200'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                            selectedPromoId === null ? 'border-gray-500 bg-gray-500' : 'border-gray-300'
+                          }`}>
+                            {selectedPromoId === null && <span className="w-2 h-2 rounded-full bg-white block" />}
+                          </div>
+                          <span className="text-sm text-gray-500">No offer — pay full price</span>
+                        </button>
+
+                        {/* Each applicable promo */}
+                        {applicablePromos.map((p) => {
+                          const saving = p.discount_type === 'percentage'
+                            ? afterTier * (p.discount_value / 100)
+                            : Number(p.discount_value);
+                          const isSelected = selectedPromoId === p.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedPromoId(isSelected ? null : p.id)}
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                                isSelected
+                                  ? 'border-green-400 bg-green-50'
+                                  : 'border-gray-100 hover:border-green-200 hover:bg-green-50/40'
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                                isSelected ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                              }`}>
+                                {isSelected && <span className="w-2 h-2 rounded-full bg-white block" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-onyx-900 leading-tight">{p.title}</p>
+                                {p.description && (
+                                  <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{p.description}</p>
+                                )}
+                              </div>
+                              <div className="flex-shrink-0 text-right">
+                                <span className="bg-green-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg block">
+                                  {p.discount_type === 'percentage' ? `${p.discount_value}% OFF` : `NZ$${p.discount_value} OFF`}
+                                </span>
+                                <span className="text-[10px] text-green-600 font-medium mt-0.5 block">
+                                  save NZ${saving.toFixed(2)}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Voucher */}
                     <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -570,9 +617,6 @@ export default function BookingPage() {
                       {applicablePromo && (
                         <p className="text-xs text-green-400 font-medium mb-0.5">
                           🎁 {applicablePromo.title} — {applicablePromo.discount_type === 'percentage' ? `${applicablePromo.discount_value}% off` : `NZ$${applicablePromo.discount_value} off`}
-                          {applicablePromos.length > 1 && (
-                            <span className="ml-1.5 text-white/40 font-normal">(best of {applicablePromos.length} offers)</span>
-                          )}
                         </p>
                       )}
                       {voucherData && (
