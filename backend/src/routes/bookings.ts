@@ -193,11 +193,11 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
           AND (end_date IS NULL OR end_date >= NOW())
           AND (
             jsonb_array_length(COALESCE(applicable_dates, '[]'::jsonb)) = 0
-            OR COALESCE(applicable_dates, '[]'::jsonb) @> jsonb_build_array($2)
+            OR COALESCE(applicable_dates, '[]'::jsonb) @> jsonb_build_array($2::text)
           )
           AND (
             jsonb_array_length(COALESCE(applicable_services, '[]'::jsonb)) = 0
-            OR COALESCE(applicable_services, '[]'::jsonb) @> jsonb_build_array($3)
+            OR COALESCE(applicable_services, '[]'::jsonb) @> jsonb_build_array($3::text)
           )
       `, [promotion_id, bookingDate, service_id]);
 

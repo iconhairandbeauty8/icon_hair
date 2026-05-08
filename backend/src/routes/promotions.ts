@@ -54,7 +54,7 @@ router.get('/', async (req: Request, res: Response) => {
         AND (
           jsonb_array_length(COALESCE(p.applicable_dates, '[]'::jsonb)) = 0
           OR COALESCE(p.applicable_dates, '[]'::jsonb) @> jsonb_build_array(
-            COALESCE($1, to_char(CURRENT_DATE, 'YYYY-MM-DD'))
+            COALESCE($1::text, to_char(CURRENT_DATE, 'YYYY-MM-DD'))
           )
         )
       GROUP BY p.id
