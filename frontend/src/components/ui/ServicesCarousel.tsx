@@ -14,6 +14,7 @@ export default function ServicesCarousel() {
   const [spacing, setSpacing] = useState(250);
   const [visibleRange, setVisibleRange] = useState(2);
   const [cardWidth, setCardWidth] = useState(272);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { data: svcData, isLoading } = useQuery({
     queryKey: ['services-carousel'],
@@ -33,21 +34,25 @@ export default function ServicesCarousel() {
     const update = () => {
       const w = window.innerWidth;
       if (w < 480) {
-        setSpacing(Math.round(w * 0.62));
+        setSpacing(Math.round(w * 0.46));  // tight spacing → side cards peek clearly
         setVisibleRange(1);
-        setCardWidth(Math.round(w * 0.72));
+        setCardWidth(Math.round(w * 0.62)); // wide enough to be prominent
+        setIsMobile(true);
       } else if (w < 640) {
-        setSpacing(Math.round(w * 0.6));
+        setSpacing(Math.round(w * 0.46));
         setVisibleRange(1);
-        setCardWidth(Math.round(w * 0.68));
+        setCardWidth(Math.round(w * 0.60));
+        setIsMobile(true);
       } else if (w < 1024) {
         setSpacing(200);
         setVisibleRange(1);
         setCardWidth(272);
+        setIsMobile(false);
       } else {
         setSpacing(260);
         setVisibleRange(2);
         setCardWidth(272);
+        setIsMobile(false);
       }
     };
     update();
@@ -140,19 +145,19 @@ export default function ServicesCarousel() {
 
       {/* Card deck */}
       {isLoading ? (
-        <div className="relative z-10 flex items-center justify-center gap-6" style={{ height: 460 }}>
+        <div className="relative z-10 flex items-center justify-center gap-6" style={{ height: isMobile ? 350 : 460 }}>
           {[0, 1, 2].map((i) => (
             <div
               key={i}
               className="rounded-3xl bg-white/10 border border-white/20 animate-pulse"
-              style={{ width: cardWidth, height: 440, opacity: 1 - i * 0.35, flexShrink: 0 }}
+              style={{ width: cardWidth, height: isMobile ? 330 : 440, opacity: 1 - i * 0.35, flexShrink: 0 }}
             />
           ))}
         </div>
       ) : services.length === 0 ? null : (
         <div
           className="relative z-10 mx-auto"
-          style={{ height: visibleRange === 0 ? 460 : 480, perspective: '1400px' }}
+          style={{ height: isMobile ? 350 : (visibleRange === 0 ? 460 : 480), perspective: '1400px' }}
         >
           {services.map((svc, i) => {
             let offset = i - active;
@@ -171,15 +176,15 @@ export default function ServicesCarousel() {
                 style={{
                   width: cardWidth,
                   marginLeft: -(cardWidth / 2),
-                  marginTop: -210,
+                  marginTop: isMobile ? -165 : -210,
                   zIndex: 20 - abs,
                 }}
                 animate={{
                   x: offset * spacing,
-                  scale: isCenter ? 1.06 : 1 - abs * 0.1,
-                  opacity: isCenter ? 1 : 1 - abs * 0.35,
-                  rotateY: offset * -7,
-                  filter: abs > 0 ? `blur(${abs * 2}px)` : 'blur(0px)',
+                  scale: isCenter ? 1.04 : 1 - abs * 0.08,
+                  opacity: isCenter ? 1 : isMobile ? 0.82 : 1 - abs * 0.35,
+                  rotateY: isMobile ? 0 : offset * -7,
+                  filter: isMobile ? 'blur(0px)' : abs > 0 ? `blur(${abs * 2}px)` : 'blur(0px)',
                 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 30 }}
                 onClick={() => !isCenter && setActive(i)}
@@ -192,9 +197,12 @@ export default function ServicesCarousel() {
                 }}
               >
                 {/* Card */}
-                <div className={`h-[440px] rounded-[28px] overflow-hidden relative transition-all duration-300 ${
-                  isCenter ? 'shadow-2xl shadow-black/35' : 'shadow-md shadow-black/20'
-                }`}>
+                <div
+                  style={{ height: isMobile ? 330 : 440 }}
+                  className={`rounded-[28px] overflow-hidden relative transition-all duration-300 ${
+                    isCenter ? 'shadow-2xl shadow-black/35' : 'shadow-md shadow-black/20'
+                  }`}
+                >
 
                   {/* Image with zoom on active */}
                   <motion.div
