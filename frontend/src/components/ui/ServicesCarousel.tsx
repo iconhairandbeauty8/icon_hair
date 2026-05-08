@@ -60,7 +60,7 @@ export default function ServicesCarousel() {
   const next = () => setActive(i => (i + 1) % total);
 
   return (
-    <section className="relative py-20 sm:py-32 bg-gray-950" style={{ overflowX: 'hidden' }}>
+    <section className="relative py-20 sm:py-32 bg-[#0d0018]" style={{ overflowX: 'hidden' }}>
 
       {/* Blend in from white hero above */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent z-10" />
@@ -82,7 +82,7 @@ export default function ServicesCarousel() {
         <motion.p
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-purple-400 text-xs font-semibold tracking-widest uppercase mb-3"
+          className="text-[#c084fc] text-xs font-semibold tracking-widest uppercase mb-3"
         >
           What We Offer
         </motion.p>
@@ -101,7 +101,7 @@ export default function ServicesCarousel() {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="rounded-3xl bg-white/5 border border-white/10"
+              className="rounded-3xl bg-[#1a0030]/60 border border-white/10"
               style={{ width: cardWidth, height: 400, opacity: 1 - i * 0.35, flexShrink: 0 }}
             />
           ))}
@@ -151,8 +151,8 @@ export default function ServicesCarousel() {
                 <div
                   className={`h-[400px] rounded-3xl overflow-hidden flex flex-col transition-all duration-300 ${
                     isCenter
-                      ? 'bg-gray-900 border border-[#9333ea]/50 shadow-2xl shadow-[#7c3aed]/30 ring-1 ring-[#9333ea]/20'
-                      : 'bg-gray-900/50 border border-white/[0.07]'
+                      ? 'bg-[#1a0030] border border-[#9333ea]/50 shadow-2xl shadow-[#7c3aed]/30 ring-1 ring-[#9333ea]/20'
+                      : 'bg-[#1a0030]/60 border border-white/[0.07]'
                   }`}
                 >
                   {/* Image */}
@@ -162,8 +162,8 @@ export default function ServicesCarousel() {
                       : (
                         <div className={`w-full h-full flex items-center justify-center text-5xl ${
                           isCenter
-                            ? 'bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-gray-900'
-                            : 'bg-gray-800/60'
+                            ? 'bg-gradient-to-br from-[#7c3aed] via-[#4a1070] to-[#1a0030]'
+                            : 'bg-[#2a0045]/60'
                         }`}>
                           {CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}
                         </div>
