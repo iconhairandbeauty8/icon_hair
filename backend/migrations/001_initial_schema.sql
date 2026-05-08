@@ -289,6 +289,7 @@ CREATE TABLE promotions (
   image_url TEXT,
   branch_id UUID REFERENCES branches(id), -- NULL = all branches
   applicable_services JSONB DEFAULT '[]', -- empty = all services
+  applicable_dates JSONB DEFAULT '[]',    -- empty = no date restriction
   is_active BOOLEAN DEFAULT TRUE,
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),

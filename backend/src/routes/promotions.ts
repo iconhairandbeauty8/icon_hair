@@ -34,11 +34,13 @@ router.get('/all', authenticate, authorize('admin', 'manager'), async (_req: Req
   }
 });
 
-// ─── GET /promotions  (public — active only, filtered by applicable_dates) ────
-// Optional ?date=YYYY-MM-DD — defaults to CURRENT_DATE (used by booking flow)
+// ─── GET /promotions  (public — active only) ─────────────────────────────────
+// No ?date  → Offers page: show ALL active promos (ignore applicable_dates filter)
+// ?date=YYYY-MM-DD → Booking flow: only promos valid on that specific date
 router.get('/', async (req: Request, res: Response) => {
   const dateParam = (req.query.date as string) || null;
   try {
+    // When a date is supplied, filter applicable_dates; otherwise skip that filter
     const result = await db.query(`
       SELECT p.*, ${SERVICE_DETAILS_SQL}
       FROM promotions p
@@ -52,10 +54,9 @@ router.get('/', async (req: Request, res: Response) => {
       WHERE p.is_active = true
         AND (p.end_date IS NULL OR p.end_date >= NOW())
         AND (
-          jsonb_array_length(COALESCE(p.applicable_dates, '[]'::jsonb)) = 0
-          OR COALESCE(p.applicable_dates, '[]'::jsonb) @> jsonb_build_array(
-            COALESCE($1::text, to_char(CURRENT_DATE, 'YYYY-MM-DD'))
-          )
+          $1::text IS NULL   -- no date supplied → skip date filter (Offers page)
+          OR jsonb_array_length(COALESCE(p.applicable_dates, '[]'::jsonb)) = 0
+          OR COALESCE(p.applicable_dates, '[]'::jsonb) @> jsonb_build_array($1::text)
         )
       GROUP BY p.id
       ORDER BY p.created_at DESC
