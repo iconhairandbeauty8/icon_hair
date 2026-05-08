@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { serviceApi, staffApi, bookingApi, voucherApi, loyaltyApi, resolveImageUrl } from '../../services/api';
+import { serviceApi, staffApi, bookingApi, voucherApi, loyaltyApi, promotionApi, resolveImageUrl } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import type { Service, Employee } from '../../types';
 
@@ -72,15 +72,30 @@ export default function BookingPage() {
     enabled: isAuthenticated,
   });
 
+  // Fetch active promotions for the selected booking date (or today if no date yet)
+  const { data: promosRes } = useQuery({
+    queryKey: ['promotions-booking', selectedDate],
+    queryFn: () => promotionApi.list(selectedDate ? { date: selectedDate } : {}),
+  });
+
   const services: Service[]  = Array.isArray(servicesRes?.data) ? servicesRes.data : [];
   const staffList: Employee[] = Array.isArray(staffRes?.data) ? staffRes.data : [];
   const slots: string[]       = Array.isArray(slotsRes?.data?.slots) ? slotsRes.data.slots : [];
+  const promos: any[]         = Array.isArray(promosRes?.data) ? promosRes.data : [];
 
   // Loyalty tier discount
   const loyaltyProfile = loyaltyProfileRes?.data;
   const loyaltyTiers: any[] = loyaltySettingsRes?.data?.tiers ?? [];
   const activeTier = loyaltyTiers.find((t: any) => t.key === loyaltyProfile?.membership_tier);
   const tierDiscountPct: number = activeTier?.discount ?? 0;
+
+  // Auto-apply best promotion for the selected service
+  const applicablePromo = selectedService
+    ? promos.find((p) => {
+        const svcIds: string[] = Array.isArray(p.applicable_services) ? p.applicable_services : [];
+        return svcIds.length === 0 || svcIds.includes(selectedService.id);
+      })
+    : null;
 
   const categories = ['All', ...Array.from(new Set(services.map((s) => s.category)))];
   const visibleServices = activeCategory === 'All'
@@ -89,7 +104,20 @@ export default function BookingPage() {
 
   const basePrice   = Number(selectedService?.price || 0);
   const afterTier   = tierDiscountPct > 0 ? basePrice * (1 - tierDiscountPct / 100) : basePrice;
-  const finalPrice  = voucherData ? Math.max(0, afterTier - voucherData.amount) : afterTier;
+  const promoDiscountAmt = applicablePromo
+    ? applicablePromo.discount_type === 'percentage'
+      ? afterTier * (applicablePromo.discount_value / 100)
+      : Number(applicablePromo.discount_value)
+    : 0;
+  const afterPromo  = applicablePromo ? Math.max(0, afterTier - promoDiscountAmt) : afterTier;
+  const finalPrice  = voucherData ? Math.max(0, afterPromo - voucherData.amount) : afterPromo;
+
+  // Helper: find best promo for a given service (for step-0 badges)
+  const promoForService = (serviceId: string) =>
+    promos.find((p) => {
+      const svcIds: string[] = Array.isArray(p.applicable_services) ? p.applicable_services : [];
+      return svcIds.length === 0 || svcIds.includes(serviceId);
+    }) ?? null;
 
   // Scroll selected date into view
   useEffect(() => {
@@ -149,6 +177,7 @@ export default function BookingPage() {
         start_time: `${selectedDate}T${selectedSlot}:00`,
         notes,
         voucher_code: voucherCode || undefined,
+        promotion_id: applicablePromo?.id || undefined,
       });
       navigate(`/book/success?booking_id=${res.data.id}`);
     } catch (err: any) {
@@ -277,19 +306,37 @@ export default function BookingPage() {
                           )}
                         </div>
                         <div className="pr-5 flex-shrink-0 text-right">
-                          {tierDiscountPct > 0 ? (
-                            <>
-                              <p className="text-onyx-400 text-xs line-through">NZ${service.price}</p>
-                              <p className="text-gold-600 font-bold text-base">
-                                NZ${(Number(service.price) * (1 - tierDiscountPct / 100)).toFixed(2)}
-                              </p>
-                              <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
-                                {tierDiscountPct}% off
-                              </span>
-                            </>
-                          ) : (
-                            <p className="text-gold-600 font-bold text-base">NZ${service.price}</p>
-                          )}
+                          {(() => {
+                            const svcPromo = promoForService(service.id);
+                            const afterTierPrice = tierDiscountPct > 0
+                              ? Number(service.price) * (1 - tierDiscountPct / 100)
+                              : Number(service.price);
+                            const promoAmt = svcPromo
+                              ? svcPromo.discount_type === 'percentage'
+                                ? afterTierPrice * (svcPromo.discount_value / 100)
+                                : Number(svcPromo.discount_value)
+                              : 0;
+                            const displayPrice = Math.max(0, afterTierPrice - promoAmt);
+                            const hasDiscount = tierDiscountPct > 0 || svcPromo;
+                            return (
+                              <>
+                                {hasDiscount && (
+                                  <p className="text-onyx-400 text-xs line-through">NZ${service.price}</p>
+                                )}
+                                <p className="text-gold-600 font-bold text-base">NZ${displayPrice.toFixed(2)}</p>
+                                {tierDiscountPct > 0 && !svcPromo && (
+                                  <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                                    {tierDiscountPct}% off
+                                  </span>
+                                )}
+                                {svcPromo && (
+                                  <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold block mt-0.5">
+                                    🎁 {svcPromo.discount_type === 'percentage' ? `${svcPromo.discount_value}% off` : `NZ$${svcPromo.discount_value} off`}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
                           {selectedService?.id === service.id && (
                             <span className="text-[10px] bg-gold-500 text-white px-2 py-0.5 rounded-full mt-1 inline-block">Selected</span>
                           )}
@@ -494,12 +541,17 @@ export default function BookingPage() {
                   <div className="bg-onyx-950 rounded-2xl p-5 mt-4 flex items-center justify-between">
                     <div>
                       <p className="text-white/60 text-xs">Total to pay</p>
-                      {(tierDiscountPct > 0 || voucherData) && (
+                      {(tierDiscountPct > 0 || applicablePromo || voucherData) && (
                         <p className="text-white/40 text-xs line-through">NZ${basePrice.toFixed(2)}</p>
                       )}
                       {tierDiscountPct > 0 && (
                         <p className="text-xs text-gold-400 font-medium mb-0.5">
                           {activeTier?.icon} {activeTier?.label} member — {tierDiscountPct}% off
+                        </p>
+                      )}
+                      {applicablePromo && (
+                        <p className="text-xs text-green-400 font-medium mb-0.5">
+                          🎁 {applicablePromo.title} — {applicablePromo.discount_type === 'percentage' ? `${applicablePromo.discount_value}% off` : `NZ$${applicablePromo.discount_value} off`}
                         </p>
                       )}
                       {voucherData && (

@@ -102,8 +102,10 @@ export const reportApi = {
 
 // ===================== PROMOTIONS =====================
 export const promotionApi = {
-  list: () => api.get('/promotions'),
-  create: (data: object) => api.post('/promotions', data),
+  list:     (params?: object)        => api.get('/promotions', { params }),
+  listAll:  ()                      => api.get('/promotions/all'),
+  create:   (data: object)          => api.post('/promotions', data),
+  update:   (id: string, data: object) => api.put(`/promotions/${id}`, data),
   validate: (code: string, serviceId: string, amount: number) =>
     api.post('/promotions/validate', { code, service_id: serviceId, amount }),
 };

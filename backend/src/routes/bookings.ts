@@ -120,9 +120,9 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
 });
 
 router.post('/', authenticate, async (req: Request, res: Response) => {
-  const { service_id, start_time, notes, voucher_code } = req.body as {
+  const { service_id, start_time, notes, voucher_code, promotion_id } = req.body as {
     service_id: string; start_time: string;
-    notes?: string; voucher_code?: string;
+    notes?: string; voucher_code?: string; promotion_id?: string;
   };
   let { employee_id } = req.body as { employee_id?: string };
   const client: PoolClient = await db.getClient();
@@ -181,6 +181,32 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
           loyaltyDiscountPct = tierConfig.discount;
           finalPrice = finalPrice * (1 - loyaltyDiscountPct / 100);
         }
+      }
+    }
+
+    // Apply promotion discount
+    if (promotion_id) {
+      const bookingDate = start_time.split('T')[0];
+      const promoResult = await client.query(`
+        SELECT * FROM promotions
+        WHERE id = $1 AND is_active = true
+          AND (end_date IS NULL OR end_date >= NOW())
+          AND (
+            jsonb_array_length(COALESCE(applicable_dates, '[]'::jsonb)) = 0
+            OR COALESCE(applicable_dates, '[]'::jsonb) @> jsonb_build_array($2)
+          )
+          AND (
+            jsonb_array_length(COALESCE(applicable_services, '[]'::jsonb)) = 0
+            OR COALESCE(applicable_services, '[]'::jsonb) @> jsonb_build_array($3)
+          )
+      `, [promotion_id, bookingDate, service_id]);
+
+      if (promoResult.rows[0]) {
+        const promo = promoResult.rows[0];
+        const promoDiscount = promo.discount_type === 'percentage'
+          ? finalPrice * (promo.discount_value / 100)
+          : Number(promo.discount_value);
+        finalPrice = Math.max(0, finalPrice - promoDiscount);
       }
     }
 
