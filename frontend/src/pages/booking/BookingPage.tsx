@@ -89,35 +89,53 @@ export default function BookingPage() {
   const activeTier = loyaltyTiers.find((t: any) => t.key === loyaltyProfile?.membership_tier);
   const tierDiscountPct: number = activeTier?.discount ?? 0;
 
-  // Auto-apply best promotion for the selected service
-  const applicablePromo = selectedService
-    ? promos.find((p) => {
+  // Helper: given a list of promos + a price, return the one that saves the most
+  const pickBestPromo = (candidates: any[], priceBase: number) => {
+    if (candidates.length === 0) return null;
+    return candidates.reduce((best, p) => {
+      const saving = (x: any) => x.discount_type === 'percentage'
+        ? priceBase * (x.discount_value / 100)
+        : Number(x.discount_value);
+      return saving(p) > saving(best) ? p : best;
+    });
+  };
+
+  // All promos applicable to the selected service (any amount)
+  const applicablePromos = selectedService
+    ? promos.filter((p) => {
         const svcIds: string[] = Array.isArray(p.applicable_services) ? p.applicable_services : [];
         return svcIds.length === 0 || svcIds.includes(selectedService.id);
       })
-    : null;
+    : [];
 
   const categories = ['All', ...Array.from(new Set(services.map((s) => s.category)))];
   const visibleServices = activeCategory === 'All'
     ? services
     : services.filter((s) => s.category === activeCategory);
 
-  const basePrice   = Number(selectedService?.price || 0);
-  const afterTier   = tierDiscountPct > 0 ? basePrice * (1 - tierDiscountPct / 100) : basePrice;
-  const promoDiscountAmt = applicablePromo
+  const basePrice  = Number(selectedService?.price || 0);
+  const afterTier  = tierDiscountPct > 0 ? basePrice * (1 - tierDiscountPct / 100) : basePrice;
+
+  // Pick the highest-value promo (after loyalty discount base)
+  const applicablePromo   = pickBestPromo(applicablePromos, afterTier);
+  const promoDiscountAmt  = applicablePromo
     ? applicablePromo.discount_type === 'percentage'
       ? afterTier * (applicablePromo.discount_value / 100)
       : Number(applicablePromo.discount_value)
     : 0;
-  const afterPromo  = applicablePromo ? Math.max(0, afterTier - promoDiscountAmt) : afterTier;
-  const finalPrice  = voucherData ? Math.max(0, afterPromo - voucherData.amount) : afterPromo;
+  const afterPromo = applicablePromo ? Math.max(0, afterTier - promoDiscountAmt) : afterTier;
+  const finalPrice = voucherData ? Math.max(0, afterPromo - voucherData.amount) : afterPromo;
 
-  // Helper: find best promo for a given service (for step-0 badges)
-  const promoForService = (serviceId: string) =>
-    promos.find((p) => {
+  // Helper: best promo for any service (for step-0 card badges)
+  const promoForService = (serviceId: string) => {
+    const priceBase = Number(services.find((s: any) => s.id === serviceId)?.price ?? 0);
+    const afterTierBase = tierDiscountPct > 0 ? priceBase * (1 - tierDiscountPct / 100) : priceBase;
+    const candidates = promos.filter((p) => {
       const svcIds: string[] = Array.isArray(p.applicable_services) ? p.applicable_services : [];
       return svcIds.length === 0 || svcIds.includes(serviceId);
-    }) ?? null;
+    });
+    return pickBestPromo(candidates, afterTierBase);
+  };
 
   // Scroll selected date into view
   useEffect(() => {
@@ -552,6 +570,9 @@ export default function BookingPage() {
                       {applicablePromo && (
                         <p className="text-xs text-green-400 font-medium mb-0.5">
                           🎁 {applicablePromo.title} — {applicablePromo.discount_type === 'percentage' ? `${applicablePromo.discount_value}% off` : `NZ$${applicablePromo.discount_value} off`}
+                          {applicablePromos.length > 1 && (
+                            <span className="ml-1.5 text-white/40 font-normal">(best of {applicablePromos.length} offers)</span>
+                          )}
                         </p>
                       )}
                       {voucherData && (
