@@ -9,7 +9,7 @@ export default function AdminStaff() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [form, setForm] = useState({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', bio:'', image_url:'', experience_years:0, service_ids:[] as string[] });
+  const [form, setForm] = useState({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', bio:'', image_url:'', experience_years:0, service_ids:[] as string[], login_password:'' });
 
   const { data: staffRes, isLoading } = useQuery({ queryKey:['admin-staff'], queryFn: () => staffApi.list() });
   const { data: servicesRes } = useQuery({ queryKey:['services'], queryFn: () => serviceApi.list() });
@@ -23,8 +23,8 @@ export default function AdminStaff() {
     onError: () => toast.error('Save failed'),
   });
 
-  const openEdit = (member: any) => { setEditTarget(member); setForm({ ...member, service_ids: member.service_ids || [] }); setShowForm(true); };
-  const openNew = () => { setEditTarget(null); setForm({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', bio:'', image_url:'', experience_years:0, service_ids:[] }); setShowForm(true); };
+  const openEdit = (member: any) => { setEditTarget(member); setForm({ ...member, service_ids: member.service_ids || [], login_password: '' }); setShowForm(true); };
+  const openNew = () => { setEditTarget(null); setForm({ first_name:'', last_name:'', email:'', phone:'', role:'Hairdresser', bio:'', image_url:'', experience_years:0, service_ids:[], login_password:'' }); setShowForm(true); };
 
   const ROLES = ['Hairdresser','Barber','Colourist','Beautician','Nail Technician','Massage Therapist','Skincare Specialist','Lash Artist','Brow Specialist'];
 
@@ -92,6 +92,25 @@ export default function AdminStaff() {
                 <input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} className="input-luxury text-sm py-2" /></div>
               <div><label className="block text-xs font-medium text-onyx-600 mb-1">Phone</label>
                 <input value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} className="input-luxury text-sm py-2" /></div>
+              <div>
+                <label className="block text-xs font-medium text-onyx-600 mb-1">
+                  {editTarget ? 'Set / Reset Password' : 'Temporary Password'}
+                  {' '}<span className="text-gold-500">(for staff login)</span>
+                </label>
+                <input
+                  type="password"
+                  value={form.login_password}
+                  onChange={e=>setForm(f=>({...f,login_password:e.target.value}))}
+                  className="input-luxury text-sm py-2"
+                  placeholder={editTarget ? 'Leave blank to keep existing password' : 'Leave blank to skip login creation'}
+                />
+                {editTarget && !editTarget.user_id && (
+                  <p className="text-xs text-amber-500 mt-1">⚠ No login yet — set a password to create one</p>
+                )}
+                {editTarget && editTarget.user_id && (
+                  <p className="text-xs text-green-600 mt-1">✓ Login exists — leave blank to keep current password</p>
+                )}
+              </div>
               <div><label className="block text-xs font-medium text-onyx-600 mb-1">Bio</label>
                 <textarea value={form.bio} onChange={e=>setForm(f=>({...f,bio:e.target.value}))} rows={2} className="input-luxury text-sm" /></div>
               <ImageUpload

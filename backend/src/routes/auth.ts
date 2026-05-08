@@ -32,16 +32,17 @@ router.post('/register', [
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    const roleResult = await db.query("SELECT id FROM roles WHERE name = 'customer'");
-    const roleId = roleResult.rows[0]?.id as string;
+    const roleResult = await db.query("SELECT id, name FROM roles WHERE name = 'customer'");
+    const roleRow = roleResult.rows[0];
+    const roleId = roleRow?.id as string;
 
     const result = await db.query(
       `INSERT INTO users (email, password_hash, first_name, last_name, phone, role_id)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email, first_name, last_name`,
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email, first_name, last_name, role_id`,
       [email, hashed, first_name, last_name, phone, roleId]
     );
 
-    const user = result.rows[0];
+    const user = { ...(result.rows[0] as any), role_name: roleRow?.name ?? 'customer' };
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET as string,
@@ -97,8 +98,9 @@ router.post('/login', [
 
     const { password_hash, ...safeUser } = user;
     res.json({ user: safeUser, token });
-  } catch {
-    res.status(500).json({ error: 'Login failed' });
+  } catch (err) {
+    console.error('LOGIN ERROR:', (err as Error).message, (err as Error).stack);
+    res.status(500).json({ error: 'Login failed', detail: (err as Error).message });
   }
 });
 

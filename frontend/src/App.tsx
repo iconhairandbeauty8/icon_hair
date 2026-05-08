@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
 
 // Public pages
 import HomePage from './pages/public/HomePage';
@@ -18,6 +19,9 @@ import BookingSuccessPage from './pages/booking/BookingSuccessPage';
 // Auth
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+
+// Staff portal
+import StaffPortalPage from './pages/staff/StaffPortalPage';
 
 // Customer portal
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -52,10 +56,20 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
   return <>{children}</>;
 }
 
+/** Refreshes the stored user on every app load so role_name is always up to date */
+function AuthSync() {
+  const { token, fetchMe } = useAuthStore();
+  useEffect(() => {
+    if (token) fetchMe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AuthSync />
         <Toaster
           position="top-right"
           toastOptions={{
@@ -84,6 +98,13 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
+          {/* Staff portal */}
+          <Route path="/staff-portal" element={
+            <ProtectedRoute roles={['staff']}>
+              <StaffPortalPage />
+            </ProtectedRoute>
+          } />
+
           {/* Customer portal */}
           <Route path="/my/*" element={
             <ProtectedRoute roles={['customer']}>
@@ -98,7 +119,7 @@ export default function App() {
 
           {/* Admin portal */}
           <Route path="/admin" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+            <ProtectedRoute roles={['admin', 'manager']}>
               <AdminLayout />
             </ProtectedRoute>
           }>

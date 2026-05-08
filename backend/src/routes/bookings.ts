@@ -163,7 +163,26 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     if (conflict.rows.length > 0) throw new Error('Time slot no longer available');
 
     let finalPrice: number = service.price;
+    let loyaltyDiscountPct = 0;
     let voucherId: string | null = null;
+
+    // Apply loyalty tier discount
+    const loyaltyResult = await client.query(`
+      SELECT lp.membership_tier, ls.tiers
+      FROM loyalty_profiles lp
+      LEFT JOIN loyalty_settings ls ON ls.id = 1
+      WHERE lp.customer_id = $1
+    `, [req.user!.id]);
+    if (loyaltyResult.rows[0]) {
+      const { membership_tier, tiers } = loyaltyResult.rows[0] as { membership_tier: string; tiers: any[] };
+      if (Array.isArray(tiers)) {
+        const tierConfig = tiers.find((t: any) => t.key === membership_tier);
+        if (tierConfig?.discount > 0) {
+          loyaltyDiscountPct = tierConfig.discount;
+          finalPrice = finalPrice * (1 - loyaltyDiscountPct / 100);
+        }
+      }
+    }
 
     if (voucher_code) {
       const voucher = await client.query(

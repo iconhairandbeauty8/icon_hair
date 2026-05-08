@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { serviceApi, resolveImageUrl } from '../../services/api';
 
@@ -59,57 +59,100 @@ export default function ServicesCarousel() {
   const prev = () => setActive(i => (i - 1 + total) % total);
   const next = () => setActive(i => (i + 1) % total);
 
+  // Mouse parallax
+  const sectionRef = useRef<HTMLElement>(null);
+  const [spot, setSpot] = useState({ x: 50, y: 50 });
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const springCfg = { stiffness: 60, damping: 22 };
+  const sx = useSpring(rawX, springCfg);
+  const sy = useSpring(rawY, springCfg);
+  const orb1X = useTransform(sx, [-1, 1], [-35, 35]);
+  const orb1Y = useTransform(sy, [-1, 1], [-20, 20]);
+  const orb2X = useTransform(sx, [-1, 1], [25, -25]);
+  const orb2Y = useTransform(sy, [-1, 1], [18, -18]);
+  const orb3X = useTransform(sx, [-1, 1], [-55, 55]);
+  const orb3Y = useTransform(sy, [-1, 1], [-30, 30]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    rawX.set((x - 0.5) * 2);
+    rawY.set((y - 0.5) * 2);
+    setSpot({ x: x * 100, y: y * 100 });
+  };
+  const handleMouseLeave = () => {
+    rawX.set(0);
+    rawY.set(0);
+    setSpot({ x: 50, y: 50 });
+  };
+
   return (
-    <section className="relative py-20 sm:py-32 bg-[#0f0525]" style={{ overflowX: 'hidden' }}>
+    <section
+      ref={sectionRef}
+      className="relative pt-0 pb-12 sm:pb-16"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        overflowX: 'clip',
+        background: `radial-gradient(480px circle at ${spot.x}% ${spot.y}%, rgba(255,255,255,0.22) 0%, transparent 65%),
+          linear-gradient(180deg, #ffffff 0%, rgba(124,58,237,0.45) 28%, rgba(147,51,234,0.45) 68%, #ffffff 90%, #ffffff 100%)`,
+        transition: 'background 0.08s ease',
+      }}
+    >
 
-      {/* Blend in from white hero above */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent z-10" />
-
-      {/* Purple gradient radial glow */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_55%,rgba(124,58,237,0.22),rgba(147,51,234,0.08),transparent)]" />
-
-      {/* Subtle grid texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
+      {/* Parallax orbs */}
+      <motion.div style={{ x: orb1X, y: orb1Y }}
+        className="pointer-events-none absolute -top-20 -left-20 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
+      <motion.div style={{ x: orb2X, y: orb2Y }}
+        className="pointer-events-none absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
+      <motion.div style={{ x: orb3X, y: orb3Y }}
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-white/5 blur-3xl" />
 
       {/* Section header */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 text-center mb-12 sm:mb-20">
-        <motion.p
+      <div className="relative z-10 max-w-7xl mx-auto px-4 text-center mb-8 sm:mb-10">
+        <motion.div
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[#c084fc] text-xs font-semibold tracking-widest uppercase mb-3"
+          className="inline-flex items-center gap-2 mb-4"
         >
-          What We Offer
-        </motion.p>
+          <span className="w-6 h-px bg-gray-400" />
+          <span className="text-gray-500 text-xs font-semibold tracking-widest uppercase">What We Offer</span>
+          <span className="w-6 h-px bg-gray-400" />
+        </motion.div>
         <motion.h2
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }} viewport={{ once: true }}
-          className="font-display text-3xl md:text-5xl font-bold text-white"
+          className="font-display text-4xl md:text-6xl font-bold text-gray-900"
         >
           Our Services
         </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }} viewport={{ once: true }}
+          className="text-gray-500 mt-3 text-sm"
+        >
+          Swipe to explore · tap to select
+        </motion.p>
       </div>
 
       {/* Card deck */}
       {isLoading ? (
-        <div className="relative z-10 flex items-center justify-center gap-6" style={{ height: 440 }}>
+        <div className="relative z-10 flex items-center justify-center gap-6" style={{ height: 460 }}>
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="rounded-3xl bg-[#1e0845]/60 border border-white/10"
-              style={{ width: cardWidth, height: 400, opacity: 1 - i * 0.35, flexShrink: 0 }}
+              className="rounded-3xl bg-white/10 border border-white/20 animate-pulse"
+              style={{ width: cardWidth, height: 440, opacity: 1 - i * 0.35, flexShrink: 0 }}
             />
           ))}
         </div>
       ) : services.length === 0 ? null : (
         <div
           className="relative z-10 mx-auto"
-          style={{ height: visibleRange === 0 ? 420 : 440, perspective: '1400px' }}
+          style={{ height: visibleRange === 0 ? 460 : 480, perspective: '1400px' }}
         >
           {services.map((svc, i) => {
             let offset = i - active;
@@ -128,19 +171,19 @@ export default function ServicesCarousel() {
                 style={{
                   width: cardWidth,
                   marginLeft: -(cardWidth / 2),
-                  marginTop: -200,
+                  marginTop: -210,
                   zIndex: 20 - abs,
                 }}
                 animate={{
                   x: offset * spacing,
-                  scale: isCenter ? 1.05 : 1 - abs * 0.09,
-                  opacity: isCenter ? 1 : 1 - abs * 0.32,
-                  rotateY: offset * -6,
-                  filter: abs > 0 ? `blur(${abs * 1.5}px)` : 'blur(0px)',
+                  scale: isCenter ? 1.06 : 1 - abs * 0.1,
+                  opacity: isCenter ? 1 : 1 - abs * 0.35,
+                  rotateY: offset * -7,
+                  filter: abs > 0 ? `blur(${abs * 2}px)` : 'blur(0px)',
                 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+                transition={{ type: 'spring', stiffness: 280, damping: 30 }}
                 onClick={() => !isCenter && setActive(i)}
-                whileHover={isCenter ? { y: -10, transition: { duration: 0.25, ease: 'easeOut' } } : {}}
+                whileHover={isCenter ? { y: -12, transition: { duration: 0.22, ease: 'easeOut' } } : {}}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 onDragEnd={(_, info) => {
@@ -148,76 +191,74 @@ export default function ServicesCarousel() {
                   if (info.offset.x > 50) prev();
                 }}
               >
-                <div
-                  className={`h-[400px] rounded-3xl overflow-hidden flex flex-col transition-all duration-300 ${
-                    isCenter
-                      ? 'bg-[#1e0845] border border-[#9333ea]/50 shadow-2xl shadow-[#7c3aed]/30 ring-1 ring-[#9333ea]/20'
-                      : 'bg-[#1e0845]/60 border border-white/[0.07]'
-                  }`}
-                >
-                  {/* Image */}
-                  <div className="relative h-48 shrink-0 overflow-hidden">
+                {/* Card */}
+                <div className={`h-[440px] rounded-[28px] overflow-hidden relative transition-all duration-300 ${
+                  isCenter ? 'shadow-2xl shadow-black/35' : 'shadow-md shadow-black/20'
+                }`}>
+
+                  {/* Image with zoom on active */}
+                  <motion.div
+                    className="absolute inset-0"
+                    animate={{ scale: isCenter ? 1.08 : 1 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  >
                     {svc.image_url
                       ? <img src={resolveImageUrl(svc.image_url)} alt={svc.name} className="w-full h-full object-cover" />
                       : (
-                        <div className={`w-full h-full flex items-center justify-center text-5xl ${
-                          isCenter
-                            ? 'bg-gradient-to-br from-[#7c3aed] via-[#4a1a8a] to-[#0f0525]'
-                            : 'bg-[#2a1060]/60'
-                        }`}>
-                          {CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}
+                        <div className="w-full h-full bg-gradient-to-br from-purple-400 via-purple-600 to-purple-900 flex items-center justify-center">
+                          <span className="text-8xl opacity-25 select-none">
+                            {CATEGORY_ICON[svc.category?.toLowerCase()] ?? '💇'}
+                          </span>
                         </div>
                       )
                     }
-                    {/* Bottom gradient over image */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
-                    {/* Category pill */}
+                  </motion.div>
+
+                  {/* Scrim */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+
+                  {/* Top row — category + popular */}
+                  <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
                     {svc.category && (
-                      <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase text-white bg-gold-gradient backdrop-blur-md px-2.5 py-1 rounded-full">
+                      <span className="text-[10px] font-semibold tracking-widest uppercase text-white/90 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
                         {svc.category}
                       </span>
                     )}
-                    {/* Popular badge */}
                     {isCenter && svc.booking_count > 0 && (
-                      <span className="absolute top-3 right-3 text-[10px] font-bold tracking-wide text-white bg-gold-gradient backdrop-blur-md px-2.5 py-1 rounded-full">
-                        ★ Popular
+                      <span className="text-[10px] font-semibold text-amber-300 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-amber-400/25 ml-auto">
+                        ✦ Popular
                       </span>
                     )}
                   </div>
 
-                  {/* Info */}
-                  <div className="p-5 flex flex-col justify-between flex-1">
-                    <div>
-                      <h3 className={`font-bold text-base leading-snug mb-1.5 ${isCenter ? 'text-white' : 'text-white/70'}`}>
-                        {svc.name}
-                      </h3>
-                      <p className="text-white/40 text-xs leading-relaxed line-clamp-2">
-                        {svc.description}
-                      </p>
+                  {/* Frosted glass bottom panel */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/45 backdrop-blur-xl border-t border-white/10 p-5">
+                    <h3 className="font-bold text-white text-lg leading-snug mb-2 truncate">
+                      {svc.name}
+                    </h3>
+
+                    {/* Price + duration chips */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-xs font-semibold text-white bg-white/15 px-3 py-1 rounded-full">
+                        NZ${svc.price}
+                      </span>
+                      <span className="text-xs text-white/50 bg-white/8 px-3 py-1 rounded-full border border-white/10">
+                        {svc.duration_minutes} min
+                      </span>
                     </div>
 
-                    <div>
-                      <div className={`w-full h-px my-3 ${isCenter ? 'bg-purple-500/25' : 'bg-white/[0.07]'}`} />
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className={`font-bold text-sm ${isCenter ? 'text-white' : 'text-white/60'}`}>
-                            NZ${svc.price}
-                          </div>
-                          <div className="text-white/30 text-xs">{svc.duration_minutes} min</div>
-                        </div>
-                        <Link
-                          to={`/book?service_id=${svc.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 ${
-                            isCenter
-                              ? 'bg-gold-gradient text-white shadow-gold hover:opacity-90'
-                              : 'bg-white/8 text-white/50 border border-white/10 hover:bg-white/15'
-                          }`}
-                        >
-                          Book
-                        </Link>
-                      </div>
-                    </div>
+                    {/* Book button */}
+                    <Link
+                      to={`/book?service_id=${svc.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`block w-full text-center text-sm font-bold py-2.5 rounded-2xl transition-all duration-200 ${
+                        isCenter
+                          ? 'bg-white text-purple-700 hover:bg-white/90 shadow-md'
+                          : 'bg-white/12 text-white/60 border border-white/15 hover:bg-white/20'
+                      }`}
+                    >
+                      Book Now
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -227,39 +268,47 @@ export default function ServicesCarousel() {
       )}
 
       {/* Navigation */}
-      <div className="relative z-10 flex items-center justify-center gap-5 mt-8">
-        <button
-          onClick={prev}
-          className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white/60
-                     hover:bg-gold-gradient hover:border-transparent hover:text-white transition-all duration-200"
-        >
-          ←
-        </button>
-        <div className="flex items-center gap-2">
-          {services.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === active
-                  ? 'w-6 h-2 bg-gold-gradient'
-                  : 'w-2 h-2 bg-white/20 hover:bg-white/40'
-              }`}
-            />
-          ))}
-        </div>
-        <button
-          onClick={next}
-          className="w-10 h-10 rounded-full bg-white/8 border border-white/15 flex items-center justify-center text-white/60
-                     hover:bg-gold-gradient hover:border-transparent hover:text-white transition-all duration-200"
-        >
-          →
-        </button>
-      </div>
+      <div className="relative z-10 flex flex-col items-center gap-4 mt-10">
+        {/* Active service name */}
+        {services[active] && (
+          <motion.p
+            key={active}
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className="text-gray-700 text-sm font-semibold tracking-wide"
+          >
+            {services[active].name}
+          </motion.p>
+        )}
 
-      {/* View all link */}
-      <div className="relative z-10 text-center mt-5">
-        <Link to="/services" className="text-sm text-white/30 hover:text-purple-400 transition-colors font-medium">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={prev}
+            className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700
+                       hover:bg-gold-gradient hover:text-white hover:border-transparent transition-all duration-200 text-sm"
+          >
+            ←
+          </button>
+          <div className="flex items-center gap-2">
+            {services.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === active ? 'w-6 h-2 bg-gold-gradient' : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={next}
+            className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700
+                       hover:bg-gold-gradient hover:text-white hover:border-transparent transition-all duration-200 text-sm"
+          >
+            →
+          </button>
+        </div>
+
+        <Link to="/services" className="text-gray-500 text-xs hover:text-gray-900 transition-colors font-medium mt-1">
           View all services →
         </Link>
       </div>

@@ -18,8 +18,10 @@ export function LoginPage() {
       await login(email, password);
       toast.success('Welcome back!');
       const user = useAuthStore.getState().user;
-      if (user?.role_name === 'admin' || user?.role_name === 'manager' || user?.role_name === 'staff') {
+      if (user?.role_name === 'admin' || user?.role_name === 'manager') {
         navigate('/admin');
+      } else if (user?.role_name === 'staff') {
+        navigate('/staff-portal');
       } else {
         navigate(redirect);
       }

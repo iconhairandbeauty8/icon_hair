@@ -73,7 +73,7 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden bg-gray-950"
+        className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden bg-purple-900"
       >
         {/* Hero video */}
         <video
@@ -85,7 +85,7 @@ export default function HomePage() {
           <source src="/assets/videos/herov.mp4" type="video/mp4" />
         </video>
         {/* Overlay — dark at top for text, fades to white at bottom */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-white" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-white" />
 
         <div
           className="relative z-10 text-center max-w-3xl mx-auto"
@@ -170,35 +170,37 @@ export default function HomePage() {
           4. FEATURED SERVICES
       ══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden">
-        {/* Full-section video background */}
-        <video
-          autoPlay muted loop playsInline
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        >
+        {/* Video background */}
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover object-center">
           <source src="/assets/videos/services.mp4" type="video/mp4" />
         </video>
-        {/* Dark overlay so cards stay readable */}
-        <div className="absolute inset-0 bg-black/55" />
-        {/* Blend top edge into white */}
-        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white via-white/60 to-transparent" />
-        {/* Blend bottom edge into white */}
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white via-white/60 to-transparent" />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white via-white/50 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white via-white/50 to-transparent" />
 
-        <div className="relative z-10 py-24 px-4">
+        <div className="relative z-10 py-14 px-4">
           <div className="max-w-7xl mx-auto">
+
             {/* Header */}
-            <div className="flex items-end justify-between mb-14">
-              <div>
-                <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
-                  className="text-purple-300 text-xs font-semibold tracking-widest uppercase mb-3">Signature Treatments</motion.p>
-                <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
-                  className="font-display text-4xl md:text-5xl text-white font-bold">Most Loved Services</motion.h2>
-              </div>
-              <Link to="/services" className="hidden md:flex items-center gap-1.5 text-sm text-purple-300 hover:text-white font-medium transition-colors">
-                View All <span>→</span>
-              </Link>
+            <div className="text-center mb-10">
+              <motion.div initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+                className="inline-flex items-center gap-2 mb-4">
+                <span className="w-6 h-px bg-white/40" />
+                <span className="text-white/70 text-xs font-semibold tracking-widest uppercase">Signature Treatments</span>
+                <span className="w-6 h-px bg-white/40" />
+              </motion.div>
+              <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+                className="font-display text-4xl md:text-5xl text-white font-bold mb-4">
+                Most Loved Services
+              </motion.h2>
+              <motion.div initial="hidden" whileInView="visible" variants={fadeUp} custom={2} viewport={{ once: true }}>
+                <Link to="/services" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white font-medium transition-colors">
+                  Browse all services <span>→</span>
+                </Link>
+              </motion.div>
             </div>
 
+            {/* Cards */}
             {featuredServices.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featuredServices.map((service: any, i: number) => (
@@ -206,33 +208,52 @@ export default function HomePage() {
                     key={service.id}
                     initial="hidden" whileInView="visible" variants={fadeUp} custom={i}
                     viewport={{ once: true }}
-                    className="card group"
+                    className="group relative rounded-[28px] overflow-hidden shadow-xl shadow-black/30"
+                    style={{ height: '420px' }}
                   >
-                    <div className="aspect-video bg-gray-100 overflow-hidden">
+                    {/* Image */}
+                    <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
                       {service.image_url
-                        ? <img src={resolveImageUrl(service.image_url)} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        : <div className="w-full h-full flex items-center justify-center text-4xl text-gray-200">✂️</div>
+                        ? <img src={resolveImageUrl(service.image_url)} alt={service.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full bg-gradient-to-br from-purple-400 via-purple-600 to-purple-900 flex items-center justify-center">
+                            <span className="text-7xl opacity-25">✂️</span>
+                          </div>
                       }
                     </div>
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 min-w-0 pr-3">
-                          {service.category && (
-                            <span className="text-purple-600 text-xs font-semibold tracking-wider uppercase">{service.category}</span>
-                          )}
-                          <h3 className="font-semibold text-gray-900 mt-0.5">{service.name}</h3>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-bold text-gray-900">NZ${service.price}</div>
-                          <div className="text-gray-400 text-xs">{service.duration_minutes} min</div>
-                        </div>
-                      </div>
-                      {service.description && (
-                        <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-2">{service.description}</p>
+
+                    {/* Scrim */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                    {/* Top badges */}
+                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                      {service.category && (
+                        <span className="text-[10px] font-semibold tracking-widest uppercase text-white/90 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
+                          {service.category}
+                        </span>
                       )}
-                      <Link to="/book"
-                        className="w-full text-center block py-2.5 rounded-xl border border-purple-200 text-purple-600 text-sm font-semibold
-                                   hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all duration-200">
+                      {service.avg_rating > 0 && (
+                        <div className="flex items-center gap-1 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 ml-auto">
+                          <span className="text-amber-400 text-xs">★</span>
+                          <span className="text-white text-xs font-semibold">{Number(service.avg_rating).toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Frosted glass bottom panel */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/45 backdrop-blur-xl border-t border-white/10 p-5">
+                      <h3 className="font-bold text-white text-lg leading-snug mb-2 truncate">{service.name}</h3>
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xs font-semibold text-white bg-white/15 px-3 py-1 rounded-full">
+                          NZ${service.price}
+                        </span>
+                        <span className="text-xs text-white/50 bg-white/8 px-3 py-1 rounded-full border border-white/10">
+                          {service.duration_minutes} min
+                        </span>
+                      </div>
+                      <Link
+                        to={`/book?service_id=${service.id}`}
+                        className="block w-full text-center text-sm font-bold py-2.5 rounded-2xl bg-white text-purple-700 hover:bg-white/90 transition-all duration-200 shadow-md"
+                      >
                         Book Now
                       </Link>
                     </div>
@@ -242,13 +263,8 @@ export default function HomePage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="card">
-                    <div className="aspect-video bg-gray-100 skeleton" />
-                    <div className="p-6 space-y-3">
-                      <div className="h-3 bg-gray-100 rounded skeleton w-1/3" />
-                      <div className="h-4 bg-gray-100 rounded skeleton w-2/3" />
-                      <div className="h-10 bg-gray-100 rounded-xl skeleton mt-4" />
-                    </div>
+                  <div key={i} className="rounded-[28px] overflow-hidden bg-white/5 border border-white/10" style={{ height: '420px' }}>
+                    <div className="h-full skeleton opacity-30" />
                   </div>
                 ))}
               </div>
@@ -301,54 +317,122 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           6. TEAM
       ══════════════════════════════════════════════════════ */}
-      <section className="py-14 sm:py-24 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
-            <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
-              className="section-label mb-3">The Artists</motion.p>
-            <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
-              className="section-title">Meet Our Team</motion.h2>
+      <section className="relative py-12 sm:py-14 px-4 overflow-hidden bg-gradient-to-b from-white via-purple-50/30 to-white">
+
+        {/* Ambient orbs */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 -left-24 w-[480px] h-[480px] rounded-full bg-purple-200/25 blur-[110px]" />
+          <div className="absolute -bottom-24 -right-24 w-[420px] h-[420px] rounded-full bg-violet-300/20 blur-[100px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full bg-purple-100/20 blur-[90px]" />
+        </div>
+
+        {/* Dot-grid texture */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #7c3aed 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+
+        <div className="relative z-10 max-w-7xl mx-auto">
+
+          {/* Header */}
+          <div className="text-center mb-8 sm:mb-10">
+            <motion.div
+              initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+              className="inline-flex items-center gap-3 mb-4"
+            >
+              <span className="w-8 h-px bg-purple-300" />
+              <span className="text-purple-500 text-xs font-semibold tracking-[0.2em] uppercase">The Artists</span>
+              <span className="w-8 h-px bg-purple-300" />
+            </motion.div>
+            <motion.h2
+              initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+              className="section-title"
+            >
+              Meet Our Team
+            </motion.h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+          {/* Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {featuredStaff.length > 0 ? featuredStaff.map((member: any, i: number) => (
               <motion.div
                 key={member.id}
                 initial="hidden" whileInView="visible" variants={fadeUp} custom={i}
                 viewport={{ once: true }}
-                className="card group text-center"
+                className="group relative bg-white/70 backdrop-blur-sm border border-purple-100/60 rounded-2xl
+                           shadow-sm hover:shadow-xl hover:shadow-purple-200/40 hover:-translate-y-2
+                           transition-all duration-300 overflow-hidden flex flex-col"
               >
-                <div className="aspect-square bg-gray-50 overflow-hidden">
+                {/* Top gradient accent line */}
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400/60 to-transparent
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+
+                {/* Image — full width, fixed height */}
+                <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-purple-50 shrink-0">
                   {member.image_url ? (
-                    <img src={resolveImageUrl(member.image_url)} alt={member.first_name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img
+                      src={resolveImageUrl(member.image_url)}
+                      alt={member.first_name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-purple-200">
-                      {member.first_name?.[0]}
+                    <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white
+                                    bg-gradient-to-br from-purple-400 to-violet-600">
+                      {member.first_name?.[0]?.toUpperCase()}
                     </div>
                   )}
+                  {/* Image scrim */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  {/* Available dot */}
+                  <span className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm
+                                   text-emerald-400 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-white/10">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Available
+                  </span>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 text-sm">{member.first_name} {member.last_name}</h3>
-                  <p className="text-purple-600 text-xs font-medium mt-0.5">{member.role}</p>
-                  <div className="flex items-center justify-center gap-1 mt-2">
+
+                {/* Info */}
+                <div className="flex flex-col flex-1 p-4 sm:p-5">
+                  <h3 className="font-bold text-gray-900 text-base leading-tight capitalize">
+                    {member.first_name} {member.last_name}
+                  </h3>
+                  <p className="text-purple-500 text-xs font-semibold uppercase tracking-wide mt-1">{member.role}</p>
+
+                  <div className="flex items-center gap-1 mt-2">
                     <Stars rating={Math.round(member.avg_rating || 5)} />
-                    <span className="text-gray-400 text-xs">({member.review_count || 0})</span>
+                    <span className="text-gray-400 text-xs ml-0.5">({member.review_count || 0})</span>
+                  </div>
+
+                  <div className="mt-auto pt-4">
+                    <Link
+                      to={`/book?employee_id=${member.id}`}
+                      className="block w-full text-center text-xs font-bold py-2.5 rounded-xl
+                                 bg-purple-50 text-purple-700 border border-purple-100
+                                 group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600
+                                 transition-all duration-300"
+                    >
+                      Book with {member.first_name}
+                    </Link>
                   </div>
                 </div>
               </motion.div>
             )) : (
-              /* Skeleton */
               [1, 2, 3, 4].map((i) => (
-                <div key={i} className="card">
-                  <div className="aspect-square bg-gray-100 skeleton" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-3 skeleton bg-gray-100 rounded w-3/4 mx-auto" />
-                    <div className="h-3 skeleton bg-gray-100 rounded w-1/2 mx-auto" />
+                <div key={i} className="bg-white/70 border border-purple-100/60 rounded-2xl overflow-hidden">
+                  <div className="h-48 sm:h-56 bg-purple-50 skeleton" />
+                  <div className="p-4 sm:p-5 space-y-2.5">
+                    <div className="h-3.5 skeleton bg-gray-100 rounded w-3/4" />
+                    <div className="h-3 skeleton bg-gray-100 rounded w-1/2" />
+                    <div className="h-3 skeleton bg-gray-100 rounded w-2/3 mt-4" />
                   </div>
                 </div>
               ))
             )}
           </div>
+
           <div className="text-center mt-10">
             <Link to="/team" className="btn-ghost">Meet All Stylists</Link>
           </div>
@@ -358,9 +442,9 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           7. REVIEWS
       ══════════════════════════════════════════════════════ */}
-      <section className="py-14 sm:py-24 px-4 bg-gray-50">
+      <section className="py-12 sm:py-14 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
+          <div className="text-center mb-8 sm:mb-10">
             <motion.p initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
               className="section-label mb-3">Client Love</motion.p>
             <motion.h2 initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
@@ -398,20 +482,116 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           8. CTA
       ══════════════════════════════════════════════════════ */}
-      <section className="py-14 sm:py-24 px-4 bg-gray-950">
-        <div className="max-w-2xl mx-auto text-center">
-          <motion.div initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
-            <p className="section-label text-purple-400 mb-4">Ready to Transform?</p>
-            <h2 className="font-display text-4xl md:text-5xl text-white font-bold mb-6 leading-tight">
-              Book Your Appointment Today
-            </h2>
-            <p className="text-gray-400 text-lg mb-10 leading-relaxed">
-              Join 50,000+ clients who trust LuxeSalon for their beauty needs. Easy online booking, flexible scheduling.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/book" className="btn-primary px-10 py-3.5 text-base">Book Now</Link>
-            </div>
+      <section className="relative py-16 sm:py-20 px-4 bg-purple-900 overflow-hidden">
+
+        {/* Background video */}
+        <video
+          autoPlay muted loop playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-70"
+        >
+          <source src="/assets/videos/cc.mp4" type="video/mp4" />
+        </video>
+        {/* Dark overlay to keep text readable */}
+        <div className="absolute inset-0 bg-black/50" />
+
+        {/* Top & bottom blending fades */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-gray-50 via-gray-50/60 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-white via-white/60 to-transparent z-10" />
+
+        {/* Ambient orbs */}
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.18, 0.28, 0.18] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          className="pointer-events-none absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full bg-purple-700/30 blur-[120px]"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.14, 0.22, 0.14] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          className="pointer-events-none absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-violet-600/25 blur-[110px]"
+        />
+
+        {/* Dot-grid texture */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #a78bfa 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+
+          {/* Badge */}
+          <motion.div
+            initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}
+            className="inline-flex items-center gap-2.5 mb-8"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-60" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500" />
+            </span>
+            <span className="text-purple-400 text-xs font-semibold tracking-[0.2em] uppercase">
+              Ready to Transform?
+            </span>
           </motion.div>
+
+          {/* Heading */}
+          <motion.h2
+            initial="hidden" whileInView="visible" variants={fadeUp} custom={1} viewport={{ once: true }}
+            className="font-display text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-[1.05] mb-6"
+          >
+            Book Your<br />
+            <span className="bg-gradient-to-r from-purple-400 via-violet-300 to-white bg-clip-text text-transparent">
+              Appointment Today
+            </span>
+          </motion.h2>
+
+          {/* Subtext */}
+          <motion.p
+            initial="hidden" whileInView="visible" variants={fadeUp} custom={2} viewport={{ once: true }}
+            className="text-gray-400 text-base sm:text-lg leading-relaxed mb-10 max-w-xl mx-auto"
+          >
+            Easy online booking, no fees, flexible scheduling — crafted around your lifestyle.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            initial="hidden" whileInView="visible" variants={fadeUp} custom={3} viewport={{ once: true }}
+            className="flex flex-col sm:flex-row gap-3 justify-center mb-14"
+          >
+            <Link to="/book" className="btn-primary px-10 py-3.5 text-base">
+              Book Now
+            </Link>
+            <Link
+              to="/services"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl border border-white/15 text-white/70 font-semibold text-base hover:bg-white/8 hover:text-white hover:border-white/30 transition-all duration-200"
+            >
+              View Services
+            </Link>
+          </motion.div>
+
+          {/* Stats strip */}
+          <motion.div
+            initial="hidden" whileInView="visible" variants={fadeUp} custom={4} viewport={{ once: true }}
+            className="flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+          >
+            {[
+              { value: '50,000+', label: 'Happy Clients' },
+              { value: '4.9★',    label: 'Average Rating' },
+              { value: '200+',    label: 'Expert Stylists' },
+              { value: '12',      label: 'Locations' },
+            ].map(({ value, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2.5 bg-white/5 border border-white/8 backdrop-blur-sm px-4 py-2.5 rounded-full"
+              >
+                <span className="text-white font-bold text-sm">{value}</span>
+                <span className="w-px h-3.5 bg-white/20" />
+                <span className="text-gray-400 text-xs">{label}</span>
+              </div>
+            ))}
+          </motion.div>
+
         </div>
       </section>
 

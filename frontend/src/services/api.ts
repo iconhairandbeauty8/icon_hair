@@ -24,10 +24,14 @@ api.interceptors.request.use((config) => {
 });
 
 // Global error handling
+// Only redirect to /login on 401 for protected API calls — never for auth endpoints
+// (login/register/me), otherwise wrong-password errors silently reload the page.
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const url: string = err.config?.url ?? '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/me');
+    if (err.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -55,6 +59,8 @@ export const serviceApi = {
 export const staffApi = {
   list: () => api.get('/staff'),
   get: (id: string) => api.get(`/staff/${id}`),
+  me: () => api.get('/staff/me'),
+  myBookings: (params?: object) => api.get('/staff/bookings', { params }),
   create: (data: object) => api.post('/staff', data),
   update: (id: string, data: object) => api.put(`/staff/${id}`, data),
 };
@@ -119,6 +125,8 @@ export const socialApi = {
 export const loyaltyApi = {
   profile: () => api.get('/loyalty/profile'),
   customers: () => api.get('/loyalty/customers'),
+  getSettings: () => api.get('/loyalty/settings'),
+  saveSettings: (data: object) => api.put('/loyalty/settings', data),
 };
 
 // ===================== VOUCHERS =====================
