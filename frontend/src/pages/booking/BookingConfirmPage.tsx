@@ -6,10 +6,9 @@ import { paymentApi } from '../../services/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
-const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripeKey && !stripeKey.includes('placeholder')
-  ? loadStripe(stripeKey)
-  : null;
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY as string | undefined;
+const isRealStripeKey = !!stripeKey && stripeKey.startsWith('pk_') && !stripeKey.includes('your_stripe');
+const stripePromise = isRealStripeKey ? loadStripe(stripeKey!) : null;
 
 function StripeCheckout({ booking }: { booking: any }) {
   const stripe = useStripe();

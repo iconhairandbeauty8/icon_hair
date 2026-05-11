@@ -135,7 +135,9 @@ export default function BookingPage() {
         voucher_code: voucherCode || undefined,
         promotion_id: applicablePromo?.id || undefined,
       });
-      navigate(`/book/success?booking_id=${res.data.id}`);
+      navigate('/book/confirm', {
+        state: { booking: res.data, service: selectedService, staff: selectedStaff },
+      });
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Booking failed');
     } finally { setIsSubmitting(false); }
