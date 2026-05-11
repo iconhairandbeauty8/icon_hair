@@ -48,7 +48,7 @@ export interface Employee {
   is_active: boolean;
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+export type BookingStatus = 'pending' | 'confirmed' | 'finished' | 'completed' | 'cancelled' | 'no_show';
 
 export interface Booking {
   id: string;

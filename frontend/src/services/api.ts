@@ -73,6 +73,9 @@ export const bookingApi = {
   create: (data: object) => api.post('/bookings', data),
   updateStatus: (id: string, status: string) => api.put(`/bookings/${id}/status`, { status }),
   reschedule: (id: string, data: object) => api.put(`/bookings/${id}/reschedule`, data),
+  pendingReview: () => api.get('/bookings/pending-review'),
+  finish: (id: string) => api.put(`/bookings/${id}/finish`, {}),
+  reassign: (id: string, employee_id: string) => api.put(`/bookings/${id}/reassign`, { employee_id }),
 };
 
 // ===================== PAYMENTS =====================

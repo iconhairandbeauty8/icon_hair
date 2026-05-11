@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { staffApi, resolveImageUrl } from '../../services/api';
+import { staffApi, bookingApi, resolveImageUrl } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import toast from 'react-hot-toast';
 
 // ─── Calendar constants ────────────────────────────────────────────────────────
 const START_H  = 8;
@@ -18,6 +19,7 @@ const COL_GAP  = 2;
 const ST: Record<string, { bg: string; light: string; badge: string; border: string }> = {
   confirmed: { bg: 'bg-violet-500', light: 'bg-violet-50',  badge: 'bg-violet-100 text-violet-700', border: 'border-violet-200' },
   pending:   { bg: 'bg-amber-400',  light: 'bg-amber-50',   badge: 'bg-amber-100 text-amber-700',   border: 'border-amber-200'  },
+  finished:  { bg: 'bg-teal-500',   light: 'bg-teal-50',    badge: 'bg-teal-100 text-teal-700',     border: 'border-teal-200'   },
   completed: { bg: 'bg-emerald-500',light: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-700',border: 'border-emerald-200'},
   cancelled: { bg: 'bg-red-400',    light: 'bg-red-50',     badge: 'bg-red-100 text-red-500',       border: 'border-red-200'    },
   no_show:   { bg: 'bg-gray-400',   light: 'bg-gray-50',    badge: 'bg-gray-100 text-gray-500',     border: 'border-gray-200'   },
@@ -282,6 +284,7 @@ export default function StaffPortalPage() {
 function StaffCalendar() {
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
   const [selected, setSelected]   = useState<any | null>(null);
+  const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const weekEnd = addDays(weekStart, 6);
@@ -488,7 +491,15 @@ function StaffCalendar() {
       {/* Booking detail sheet */}
       <AnimatePresence>
         {selected && (
-          <BookingSheet booking={selected} onClose={() => setSelected(null)} />
+          <BookingSheet
+            booking={selected}
+            onClose={() => setSelected(null)}
+            onFinished={() => {
+              queryClient.invalidateQueries({ queryKey: ['staff-cal'] });
+              queryClient.invalidateQueries({ queryKey: ['staff-me'] });
+              setSelected(null);
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
@@ -546,8 +557,15 @@ function StaffList({ grouped }: { grouped: Record<string, any[]> }) {
 }
 
 // ─── Booking detail sheet ──────────────────────────────────────────────────────
-function BookingSheet({ booking: b, onClose }: { booking: any; onClose: () => void }) {
+function BookingSheet({ booking: b, onClose, onFinished }: { booking: any; onClose: () => void; onFinished: () => void }) {
   const st = ST[b.status] ?? ST.pending;
+
+  const finishMutation = useMutation({
+    mutationFn: () => bookingApi.finish(b.id),
+    onSuccess: () => { toast.success('Booking marked as finished — slot is now free'); onFinished(); },
+    onError:   () => toast.error('Failed to update booking'),
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -609,10 +627,20 @@ function BookingSheet({ booking: b, onClose }: { booking: any; onClose: () => vo
           </div>
 
           {b.notes && (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4">
               <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wide mb-1">Notes</p>
               <p className="text-sm text-gray-700 leading-relaxed">{b.notes}</p>
             </div>
+          )}
+
+          {(b.status === 'pending' || b.status === 'confirmed') && (
+            <button
+              onClick={() => finishMutation.mutate()}
+              disabled={finishMutation.isPending}
+              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {finishMutation.isPending ? 'Updating…' : 'Mark as Finished'}
+            </button>
           )}
         </div>
       </motion.div>

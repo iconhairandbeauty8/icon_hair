@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { bookingApi, staffApi, resolveImageUrl } from '../../services/api';
+import { bookingApi, staffApi, serviceApi, customerApi, resolveImageUrl } from '../../services/api';
 import type { Booking, BookingStatus } from '../../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const STATUSES: BookingStatus[] = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
+const STATUSES: BookingStatus[] = ['pending', 'confirmed', 'finished', 'completed', 'cancelled', 'no_show'];
 const START_H  = 8;          // 8 AM
 const END_H    = 20;         // 8 PM
 const SLOT_MIN = 30;         // minutes per grid slot
@@ -19,6 +19,7 @@ const COL_GAP  = 3;          // px gap between side-by-side cards
 const S: Record<string, { bg: string; light: string; text: string; dot: string; badge: string }> = {
   confirmed: { bg: 'bg-blue-500',    light: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-500',    badge: 'bg-blue-100 text-blue-700' },
   pending:   { bg: 'bg-amber-400',   light: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400',   badge: 'bg-amber-100 text-amber-700' },
+  finished:  { bg: 'bg-teal-500',    light: 'bg-teal-50',    text: 'text-teal-700',    dot: 'bg-teal-500',    badge: 'bg-teal-100 text-teal-700' },
   completed: { bg: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700' },
   cancelled: { bg: 'bg-red-400',     light: 'bg-red-50',     text: 'text-red-600',     dot: 'bg-red-400',     badge: 'bg-red-100 text-red-500' },
   no_show:   { bg: 'bg-gray-400',    light: 'bg-gray-50',    text: 'text-gray-500',    dot: 'bg-gray-400',    badge: 'bg-gray-100 text-gray-500' },
@@ -104,6 +105,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 export default function AdminBookings() {
   const qc = useQueryClient();
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  const [showNewBooking, setShowNewBooking] = useState(false);
   const [listFilters, setListFilters] = useState({
     date_from: new Date().toISOString().split('T')[0], status: '', page: 1,
   });
@@ -129,16 +131,23 @@ export default function AdminBookings() {
 
   return (
     <div className="space-y-4">
-      {/* View toggle */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
-        {(['calendar', 'list'] as const).map(v => (
-          <button key={v} onClick={() => setView(v)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              view === v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}>
-            {v === 'calendar' ? '📅 Calendar' : '📋 List'}
-          </button>
-        ))}
+      {/* View toggle + New Booking */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          {(['calendar', 'list'] as const).map(v => (
+            <button key={v} onClick={() => setView(v)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                view === v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}>
+              {v === 'calendar' ? '📅 Calendar' : '📋 List'}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowNewBooking(true)}
+          className="ml-auto px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
+          + New Booking
+        </button>
       </div>
 
       {view === 'calendar' ? (
@@ -150,6 +159,18 @@ export default function AdminBookings() {
           updateStatus={updateStatus}
         />
       )}
+
+      <AnimatePresence>
+        {showNewBooking && (
+          <NewBookingModal
+            onClose={() => setShowNewBooking(false)}
+            onCreated={() => {
+              qc.invalidateQueries({ queryKey: ['cal-bookings'] });
+              qc.invalidateQueries({ queryKey: ['admin-bookings'] });
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -448,7 +469,27 @@ function CalendarView({ updateStatus }: { updateStatus: any }) {
 function BookingDetail({ booking: b, onClose, updateStatus }: {
   booking: Booking; onClose: () => void; updateStatus: any;
 }) {
+  const qc = useQueryClient();
+  const [reassignTo, setReassignTo] = useState('');
   const st = S[b.status] ?? S.pending;
+
+  const { data: staffData } = useQuery({
+    queryKey: ['staff-list-cal'],
+    queryFn: () => staffApi.list(),
+  });
+  const staffList: any[] = Array.isArray(staffData?.data) ? staffData.data : [];
+
+  const reassignMutation = useMutation({
+    mutationFn: () => bookingApi.reassign(b.id, reassignTo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cal-bookings'] });
+      qc.invalidateQueries({ queryKey: ['admin-bookings'] });
+      toast.success('Booking reassigned');
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to reassign'),
+  });
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
@@ -491,6 +532,20 @@ function BookingDetail({ booking: b, onClose, updateStatus }: {
             <p className="text-sm text-gray-600 bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5 leading-relaxed">{b.notes}</p>
           )}
 
+          {/* Approve banner — shown when staff has marked job finished */}
+          {b.status === 'finished' && (
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-4">
+              <p className="text-sm font-semibold text-teal-800 mb-0.5">Staff marked this job as finished</p>
+              <p className="text-xs text-teal-600 mb-3">Review and approve to complete the booking, or send back for follow-up.</p>
+              <button
+                onClick={() => { updateStatus.mutate({ id: b.id, status: 'completed' }); onClose(); }}
+                disabled={updateStatus.isPending}
+                className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40">
+                Approve & Complete
+              </button>
+            </div>
+          )}
+
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5">Update Status</p>
             <div className="flex flex-wrap gap-2">
@@ -509,6 +564,198 @@ function BookingDetail({ booking: b, onClose, updateStatus }: {
                 );
               })}
             </div>
+          </div>
+
+          {/* Reassign staff */}
+          {b.status !== 'completed' && b.status !== 'cancelled' && b.status !== 'no_show' && (
+            <div className="border-t border-gray-100 pt-4 mt-1">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5">Reassign Staff</p>
+              <div className="flex gap-2">
+                <select value={reassignTo} onChange={e => setReassignTo(e.target.value)}
+                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400 bg-white">
+                  <option value="">Select staff…</option>
+                  {staffList.filter(s => s.id !== b.employee_id).map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => reassignMutation.mutate()}
+                  disabled={!reassignTo || reassignMutation.isPending}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40">
+                  {reassignMutation.isPending ? '…' : 'Reassign'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── New Booking Modal ────────────────────────────────────────────────────────
+function NewBookingModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({
+    customer_id: '', service_id: '', employee_id: '',
+    date: new Date().toISOString().split('T')[0], time: '', notes: '',
+  });
+  const [customerSearch, setCustomerSearch] = useState('');
+
+  const { data: custData } = useQuery({
+    queryKey: ['customers-nb'],
+    queryFn: () => customerApi.list({ limit: 200 }),
+  });
+  const { data: svcData } = useQuery({
+    queryKey: ['services-nb'],
+    queryFn: () => serviceApi.list(),
+  });
+  const { data: staffData } = useQuery({
+    queryKey: ['staff-list-cal'],
+    queryFn: () => staffApi.list(),
+  });
+  const { data: availData } = useQuery({
+    queryKey: ['avail-nb', form.service_id, form.date, form.employee_id],
+    queryFn: () => bookingApi.availability({
+      service_id: form.service_id,
+      date: form.date,
+      ...(form.employee_id ? { employee_id: form.employee_id } : {}),
+    }),
+    enabled: !!form.service_id && !!form.date,
+  });
+
+  const customers: any[] = Array.isArray(custData?.data?.customers) ? custData.data.customers : [];
+  const services: any[]  = Array.isArray(svcData?.data) ? svcData.data : [];
+  const staffList: any[] = Array.isArray(staffData?.data) ? staffData.data : [];
+  const slots: string[]  = Array.isArray(availData?.data?.slots) ? availData.data.slots : [];
+
+  const filteredCustomers = customerSearch
+    ? customers.filter(c =>
+        `${c.first_name} ${c.last_name} ${c.email}`.toLowerCase().includes(customerSearch.toLowerCase())
+      )
+    : customers;
+
+  const mutation = useMutation({
+    mutationFn: () => bookingApi.create({
+      customer_id: form.customer_id,
+      service_id: form.service_id,
+      ...(form.employee_id ? { employee_id: form.employee_id } : {}),
+      start_time: `${form.date}T${form.time}:00`,
+      ...(form.notes ? { notes: form.notes } : {}),
+    }),
+    onSuccess: () => { toast.success('Booking created'); onCreated(); onClose(); },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to create booking'),
+  });
+
+  const canSubmit = form.customer_id && form.service_id && form.date && form.time && !mutation.isPending;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.94, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.94, y: 8 }}
+        transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.22 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        onClick={e => e.stopPropagation()}>
+        <div className="h-1.5 bg-purple-600" />
+        <div className="p-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-gray-900">New Booking</h3>
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-lg">×</button>
+          </div>
+
+          {/* Customer */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Customer</label>
+            <input
+              type="text" placeholder="Search by name or email…"
+              value={customerSearch}
+              onChange={e => { setCustomerSearch(e.target.value); setForm(f => ({ ...f, customer_id: '' })); }}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400 mb-1"
+            />
+            {customerSearch && !form.customer_id && (
+              <div className="border border-gray-100 rounded-xl max-h-36 overflow-y-auto shadow-sm">
+                {filteredCustomers.slice(0, 8).map((c: any) => (
+                  <button key={c.id} type="button"
+                    onClick={() => { setForm(f => ({ ...f, customer_id: c.id })); setCustomerSearch(`${c.first_name} ${c.last_name}`); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-purple-50 border-b border-gray-50 last:border-0">
+                    <span className="font-medium">{c.first_name} {c.last_name}</span>
+                    <span className="text-gray-400 text-xs ml-2">{c.email}</span>
+                  </button>
+                ))}
+                {filteredCustomers.length === 0 && <p className="px-3 py-2 text-sm text-gray-400">No customers found</p>}
+              </div>
+            )}
+          </div>
+
+          {/* Service + Date row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Service</label>
+              <select value={form.service_id}
+                onChange={e => setForm(f => ({ ...f, service_id: e.target.value, time: '' }))}
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400 bg-white">
+                <option value="">Select…</option>
+                {services.filter((s: any) => s.is_active).map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Date</label>
+              <input type="date" value={form.date}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value, time: '' }))}
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400"
+              />
+            </div>
+          </div>
+
+          {/* Staff + Time row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Staff (optional)</label>
+              <select value={form.employee_id}
+                onChange={e => setForm(f => ({ ...f, employee_id: e.target.value, time: '' }))}
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400 bg-white">
+                <option value="">Auto-assign</option>
+                {staffList.filter((s: any) => s.is_active).map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Time Slot</label>
+              <select value={form.time}
+                onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
+                disabled={!form.service_id || !form.date}
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400 bg-white disabled:opacity-50">
+                <option value="">{!form.service_id ? 'Pick service first' : slots.length ? 'Select slot…' : 'No slots available'}</option>
+                {slots.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Notes (optional)</label>
+            <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              rows={2} placeholder="Any special requests…"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400 resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={() => mutation.mutate()}
+              disabled={!canSubmit}
+              className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors disabled:opacity-40">
+              {mutation.isPending ? 'Creating…' : 'Create Booking'}
+            </button>
           </div>
         </div>
       </motion.div>

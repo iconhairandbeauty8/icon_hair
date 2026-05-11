@@ -16,54 +16,91 @@ router.get('/availability', async (req: Request, res: Response) => {
   }
   try {
     const serviceResult = await db.query('SELECT duration_minutes FROM services WHERE id = $1', [service_id]);
-    const duration: number = serviceResult.rows[0]?.duration_minutes || 60;
+    if (!serviceResult.rows[0]) {
+      res.status(404).json({ error: 'Service not found' });
+      return;
+    }
+    const duration: number = serviceResult.rows[0].duration_minutes;
 
-    const hours = { open: '09:00', close: '18:00', closed: false };
-
-    const slots: string[] = [];
-    const [openH, openM] = (hours.open as string).split(':').map(Number);
-    const [closeH, closeM] = (hours.close as string).split(':').map(Number);
-    let current = openH * 60 + openM;
-    const end = closeH * 60 + closeM - duration;
-
-    while (current <= end) {
-      const hh = String(Math.floor(current / 60)).padStart(2, '0');
-      const mm = String(current % 60).padStart(2, '0');
-      slots.push(`${hh}:${mm}`);
-      current += 30;
+    // Generate candidate slots at 30-minute intervals within opening hours
+    const openMins = 9 * 60;   // 09:00
+    const closeMins = 18 * 60; // 18:00
+    const allSlots: number[] = [];
+    for (let t = openMins; t + duration <= closeMins; t += 30) {
+      allSlots.push(t);
     }
 
-    let bookingQuery = `
-      SELECT start_time, end_time, employee_id FROM bookings
-      WHERE DATE(start_time) = $1
-      AND status NOT IN ('cancelled', 'no_show')
-    `;
-    const params: unknown[] = [date];
+    const toTimeStr = (mins: number) =>
+      `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 
     if (employee_id) {
-      bookingQuery += ' AND employee_id = $2';
-      params.push(employee_id);
-    }
+      // Specific staff: remove slots that overlap with their existing bookings.
+      // Use AT TIME ZONE so extraction is correct regardless of server timezone.
+      const { rows: bookings } = await db.query(`
+        SELECT
+          EXTRACT(HOUR FROM start_time AT TIME ZONE 'Pacific/Auckland') * 60 +
+          EXTRACT(MINUTE FROM start_time AT TIME ZONE 'Pacific/Auckland') AS start_mins,
+          EXTRACT(HOUR FROM end_time AT TIME ZONE 'Pacific/Auckland') * 60 +
+          EXTRACT(MINUTE FROM end_time AT TIME ZONE 'Pacific/Auckland') AS end_mins
+        FROM bookings
+        WHERE employee_id = $1
+          AND (start_time AT TIME ZONE 'Pacific/Auckland')::date = $2::date
+          AND status IN ('pending', 'confirmed')
+      `, [employee_id, date]);
 
-    const bookings = await db.query(bookingQuery, params);
-    const bookedSlots = bookings.rows;
-
-    const available = slots.filter(slot => {
-      const [h, m] = slot.split(':').map(Number);
-      const slotStart = h * 60 + m;
-      const slotEnd = slotStart + duration;
-
-      return !bookedSlots.some((b) => {
-        const row = b as { start_time: string; end_time: string };
-        const bStart = new Date(row.start_time);
-        const bEnd = new Date(row.end_time);
-        const bStartMins = bStart.getHours() * 60 + bStart.getMinutes();
-        const bEndMins = bEnd.getHours() * 60 + bEnd.getMinutes();
-        return slotStart < bEndMins && slotEnd > bStartMins;
+      const available = allSlots.filter(slotStart => {
+        const slotEnd = slotStart + duration;
+        return !bookings.some(b =>
+          slotStart < Number(b.end_mins) && slotEnd > Number(b.start_mins)
+        );
       });
-    });
 
-    res.json({ slots: available, duration, date });
+      res.json({ slots: available.map(toTimeStr), duration, date });
+    } else {
+      // Any available: find all staff qualified for this service, then return
+      // slots where at least one of them is free for the full service duration.
+      const { rows: staffRows } = await db.query(`
+        SELECT DISTINCT e.id
+        FROM employees e
+        JOIN employee_services es ON es.employee_id = e.id
+        WHERE es.service_id = $1 AND e.is_active = true
+      `, [service_id]);
+
+      if (!staffRows.length) {
+        res.json({ slots: [], duration, date });
+        return;
+      }
+
+      const staffIds: string[] = (staffRows as Array<{ id: string }>).map(r => r.id);
+
+      const { rows: bookingsRaw } = await db.query(`
+        SELECT
+          employee_id,
+          EXTRACT(HOUR FROM start_time AT TIME ZONE 'Pacific/Auckland') * 60 +
+          EXTRACT(MINUTE FROM start_time AT TIME ZONE 'Pacific/Auckland') AS start_mins,
+          EXTRACT(HOUR FROM end_time AT TIME ZONE 'Pacific/Auckland') * 60 +
+          EXTRACT(MINUTE FROM end_time AT TIME ZONE 'Pacific/Auckland') AS end_mins
+        FROM bookings
+        WHERE employee_id = ANY($1)
+          AND (start_time AT TIME ZONE 'Pacific/Auckland')::date = $2::date
+          AND status IN ('pending', 'confirmed')
+      `, [staffIds, date]);
+
+      const bookings = bookingsRaw as Array<{ employee_id: string; start_mins: unknown; end_mins: unknown }>;
+
+      // Slot is available if at least one qualified staff member has no conflict
+      const available = allSlots.filter(slotStart => {
+        const slotEnd = slotStart + duration;
+        return staffIds.some(staffId => {
+          const staffBookings = bookings.filter(b => b.employee_id === staffId);
+          return !staffBookings.some(b =>
+            slotStart < Number(b.end_mins) && slotEnd > Number(b.start_mins)
+          );
+        });
+      });
+
+      res.json({ slots: available.map(toTimeStr), duration, date });
+    }
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
@@ -84,7 +121,10 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     let idx = 1;
 
     if (req.user!.role_name === 'customer') { conditions.push(`b.customer_id = $${idx++}`); params.push(req.user!.id); }
-    if (req.user!.role_name === 'staff') { conditions.push(`b.employee_id = $${idx++}`); params.push(req.user!.id); }
+    if (req.user!.role_name === 'staff') {
+      const empRow = await db.query('SELECT id FROM employees WHERE user_id = $1', [req.user!.id]);
+      if (empRow.rows[0]) { conditions.push(`b.employee_id = $${idx++}`); params.push(empRow.rows[0].id); }
+    }
     if (employee_id) { conditions.push(`b.employee_id = $${idx++}`); params.push(employee_id); }
     if (status) { conditions.push(`b.status = $${idx++}`); params.push(status); }
     if (date_from) { conditions.push(`b.start_time >= $${idx++}`); params.push(date_from); }
@@ -125,6 +165,10 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     notes?: string; voucher_code?: string; promotion_id?: string;
   };
   let { employee_id } = req.body as { employee_id?: string };
+  const isAdminRole = req.user!.role_name === 'admin' || req.user!.role_name === 'manager';
+  const customerId: string = (isAdminRole && (req.body as any).customer_id)
+    ? (req.body as any).customer_id
+    : req.user!.id;
   const client: PoolClient = await db.getClient();
 
   try {
@@ -134,7 +178,9 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     const service = serviceResult.rows[0];
     if (!service) throw new Error('Service not found');
 
-    const endTime = new Date(new Date(start_time).getTime() + service.duration_minutes * 60000);
+    // Interpret the naive timestamp from the frontend as Auckland local time.
+    // Using AT TIME ZONE in SQL is reliable regardless of server/Node.js timezone.
+    const durMins = service.duration_minutes as number;
 
     if (!employee_id) {
       const available = await client.query(`
@@ -144,11 +190,14 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
         AND NOT EXISTS (
           SELECT 1 FROM bookings b
           WHERE b.employee_id = e.id
-          AND b.status NOT IN ('cancelled','no_show')
-          AND ($2 < b.end_time AND $3 > b.start_time)
+          AND b.status IN ('pending','confirmed')
+          AND (
+            ($2::timestamp AT TIME ZONE 'Pacific/Auckland') < b.end_time
+            AND ($2::timestamp AT TIME ZONE 'Pacific/Auckland' + ($3 * interval '1 minute')) > b.start_time
+          )
         )
         LIMIT 1
-      `, [service_id, start_time, endTime.toISOString()]);
+      `, [service_id, start_time, durMins]);
       if (!available.rows[0]) throw new Error('No staff available for this time slot');
       employee_id = available.rows[0].id as string;
     }
@@ -156,9 +205,12 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     const conflict = await client.query(`
       SELECT id FROM bookings
       WHERE employee_id = $1
-      AND status NOT IN ('cancelled', 'no_show')
-      AND ($2 < end_time AND $3 > start_time)
-    `, [employee_id, start_time, endTime.toISOString()]);
+      AND status IN ('pending', 'confirmed')
+      AND (
+        ($2::timestamp AT TIME ZONE 'Pacific/Auckland') < end_time
+        AND ($2::timestamp AT TIME ZONE 'Pacific/Auckland' + ($3 * interval '1 minute')) > start_time
+      )
+    `, [employee_id, start_time, durMins]);
 
     if (conflict.rows.length > 0) throw new Error('Time slot no longer available');
 
@@ -172,7 +224,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       FROM loyalty_profiles lp
       LEFT JOIN loyalty_settings ls ON ls.id = 1
       WHERE lp.customer_id = $1
-    `, [req.user!.id]);
+    `, [customerId]);
     if (loyaltyResult.rows[0]) {
       const { membership_tier, tiers } = loyaltyResult.rows[0] as { membership_tier: string; tiers: any[] };
       if (Array.isArray(tiers)) {
@@ -223,8 +275,13 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
 
     const result = await client.query(`
       INSERT INTO bookings (customer_id, employee_id, service_id, start_time, end_time, price, notes, voucher_id, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending') RETURNING *
-    `, [req.user!.id, employee_id, service_id, start_time, endTime.toISOString(), finalPrice, notes, voucherId]);
+      VALUES (
+        $1, $2, $3,
+        $4::timestamp AT TIME ZONE 'Pacific/Auckland',
+        $4::timestamp AT TIME ZONE 'Pacific/Auckland' + ($5 * interval '1 minute'),
+        $6, $7, $8, 'pending'
+      ) RETURNING *
+    `, [customerId, employee_id, service_id, start_time, durMins, finalPrice, notes, voucherId]);
 
     await client.query('COMMIT');
     res.status(201).json(result.rows[0]);
@@ -238,7 +295,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
 
 router.put('/:id/status', authenticate, async (req: Request, res: Response) => {
   const { status } = req.body as { status: string };
-  const validStatuses = ['confirmed', 'cancelled', 'completed', 'no_show'];
+  const validStatuses = ['confirmed', 'cancelled', 'completed', 'no_show', 'finished'];
   if (!validStatuses.includes(status)) {
     res.status(400).json({ error: 'Invalid status' });
     return;
@@ -285,14 +342,108 @@ router.put('/:id/reschedule', authenticate, async (req: Request, res: Response) 
       return;
     }
 
-    const endTime = new Date(new Date(start_time).getTime() + (booking.duration_minutes as number) * 60000);
-
     const result = await db.query(`
-      UPDATE bookings SET start_time=$1, end_time=$2, employee_id=COALESCE($3, employee_id), updated_at=NOW()
-      WHERE id=$4 RETURNING *
-    `, [start_time, endTime.toISOString(), employee_id, req.params.id]);
+      UPDATE bookings
+      SET
+        start_time = $1::timestamp AT TIME ZONE 'Pacific/Auckland',
+        end_time   = $1::timestamp AT TIME ZONE 'Pacific/Auckland' + ($2 * interval '1 minute'),
+        employee_id = COALESCE($3, employee_id),
+        updated_at = NOW()
+      WHERE id = $4 RETURNING *
+    `, [start_time, booking.duration_minutes as number, employee_id, req.params.id]);
 
     res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.put('/:id/reassign', authenticate, async (req: Request, res: Response) => {
+  const { employee_id } = req.body as { employee_id: string };
+  if (!employee_id) { res.status(400).json({ error: 'employee_id is required' }); return; }
+
+  try {
+    const bookingResult = await db.query('SELECT * FROM bookings WHERE id = $1', [req.params.id]);
+    const booking = bookingResult.rows[0];
+    if (!booking) { res.status(404).json({ error: 'Booking not found' }); return; }
+
+    // Check new staff has no conflict at this time
+    const conflict = await db.query(`
+      SELECT id FROM bookings
+      WHERE employee_id = $1
+        AND id != $2
+        AND status IN ('pending', 'confirmed')
+        AND ($3 < end_time AND $4 > start_time)
+    `, [employee_id, req.params.id, booking.start_time, booking.end_time]);
+
+    if (conflict.rows.length > 0) {
+      res.status(409).json({ error: 'Selected staff member has a conflict at this time' });
+      return;
+    }
+
+    const result = await db.query(
+      'UPDATE bookings SET employee_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [employee_id, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.put('/:id/finish', authenticate, async (req: Request, res: Response) => {
+  if (req.user!.role_name !== 'staff') {
+    res.status(403).json({ error: 'Staff only' });
+    return;
+  }
+  try {
+    // employees.id != users.id — look up the employee record first
+    const empResult = await db.query('SELECT id FROM employees WHERE user_id = $1', [req.user!.id]);
+    if (!empResult.rows[0]) {
+      res.status(404).json({ error: 'Staff profile not found' });
+      return;
+    }
+    const employeeId: string = empResult.rows[0].id;
+
+    const result = await db.query(`
+      UPDATE bookings
+      SET status = 'finished',
+          end_time = NOW(),
+          updated_at = NOW()
+      WHERE id = $1
+        AND employee_id = $2
+        AND status IN ('pending', 'confirmed')
+      RETURNING *
+    `, [req.params.id, employeeId]);
+
+    if (!result.rows[0]) {
+      res.status(404).json({ error: 'Booking not found or already finished' });
+      return;
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.get('/pending-review', authenticate, async (req: Request, res: Response) => {
+  if (req.user!.role_name !== 'customer') { res.json({ booking: null }); return; }
+  try {
+    const result = await db.query(`
+      SELECT b.id, b.start_time,
+        s.name as service_name,
+        e.first_name || ' ' || e.last_name as staff_name
+      FROM bookings b
+      JOIN services s ON b.service_id = s.id
+      JOIN employees e ON b.employee_id = e.id
+      WHERE b.customer_id = $1
+        AND b.status = 'completed'
+        AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.booking_id = b.id)
+      ORDER BY b.start_time DESC
+      LIMIT 1
+    `, [req.user!.id]);
+    res.json({ booking: result.rows[0] || null });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }

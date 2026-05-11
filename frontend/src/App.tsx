@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Public pages
 import HomePage from './pages/public/HomePage';
@@ -42,6 +42,8 @@ import AdminLoyalty from './pages/admin/AdminLoyalty';
 
 import { useAuthStore } from './store/authStore';
 import PublicLayout from './components/layout/PublicLayout';
+import ReviewModal from './components/ReviewModal';
+import { bookingApi } from './services/api';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,11 +67,30 @@ function AuthSync() {
   return null;
 }
 
+/** Shows a review modal when a customer has a completed booking awaiting feedback */
+function ReviewPrompt() {
+  const { user } = useAuthStore();
+  const [pendingBooking, setPendingBooking] = useState<null | {
+    id: string; service_name: string; staff_name: string; start_time: string;
+  }>(null);
+
+  useEffect(() => {
+    if (user?.role_name !== 'customer') return;
+    bookingApi.pendingReview()
+      .then(res => { if (res.data.booking) setPendingBooking(res.data.booking); })
+      .catch(() => {});
+  }, [user?.id]); // re-check when user changes
+
+  if (!pendingBooking) return null;
+  return <ReviewModal booking={pendingBooking} onClose={() => setPendingBooking(null)} />;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthSync />
+        <ReviewPrompt />
         <Toaster
           position="top-right"
           toastOptions={{
